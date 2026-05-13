@@ -1,16 +1,6 @@
 'use client'
 
-import {
-  Button,
-  Card,
-  Description,
-  FieldError,
-  Form,
-  Input,
-  Label,
-  Spinner,
-  TextField,
-} from '@heroui/react'
+import { Button, Card, FieldError, Form, Input, Label, Spinner, TextField } from '@heroui/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -74,7 +64,7 @@ function WarningIcon() {
   )
 }
 
-export function RegisterForm() {
+export function LoginForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
@@ -90,7 +80,7 @@ export function RegisterForm() {
 
     setIsLoading(true)
     try {
-      const res = await fetch('http://localhost:3001/auth/register', {
+      const res = await fetch('http://localhost:3001/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -100,7 +90,7 @@ export function RegisterForm() {
         const data = await res.json().catch(() => ({}))
         const message = data?.message
         setServerError(
-          Array.isArray(message) ? message.join('. ') : (message ?? 'Ошибка регистрации'),
+          Array.isArray(message) ? message.join('. ') : (message ?? 'Неверный email или пароль'),
         )
         return
       }
@@ -150,8 +140,8 @@ export function RegisterForm() {
 
         <Card className="shadow-lg">
           <Card.Header className="pt-4">
-            <Card.Title>Создать аккаунт</Card.Title>
-            <Card.Description>Введите email и пароль для регистрации</Card.Description>
+            <Card.Title>Войти в аккаунт</Card.Title>
+            <Card.Description>Введите ваш email и пароль</Card.Description>
           </Card.Header>
 
           <Form onSubmit={handleSubmit}>
@@ -178,8 +168,7 @@ export function RegisterForm() {
                 fullWidth
                 name="password"
                 type={showPassword ? 'text' : 'password'}
-                autoComplete="new-password"
-                minLength={6}
+                autoComplete="current-password"
               >
                 <Label>Пароль</Label>
                 <div className="relative">
@@ -194,7 +183,6 @@ export function RegisterForm() {
                     <EyeIcon open={showPassword} />
                   </button>
                 </div>
-                <Description>Не менее 6 символов</Description>
                 <FieldError />
               </TextField>
 
@@ -219,19 +207,19 @@ export function RegisterForm() {
                 {({ isPending }) => (
                   <>
                     {isPending && <Spinner color="current" size="sm" />}
-                    {isPending ? 'Регистрация...' : 'Зарегистрироваться'}
+                    {isPending ? 'Вход...' : 'Войти'}
                   </>
                 )}
               </Button>
 
               <p className="text-center text-sm" style={{ color: 'var(--muted)' }}>
-                Уже есть аккаунт?{' '}
+                Нет аккаунта?{' '}
                 <Link
-                  href="/login"
+                  href="/register"
                   className="font-medium underline underline-offset-4"
                   style={{ color: 'var(--accent)' }}
                 >
-                  Войти
+                  Зарегистрироваться
                 </Link>
               </p>
             </Card.Footer>
