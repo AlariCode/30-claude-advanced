@@ -1,27 +1,20 @@
-import { ConflictException } from '@nestjs/common'
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
+import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs'
 import { JwtService } from '@nestjs/jwt'
-import * as bcrypt from 'bcrypt'
-import { PrismaService } from '../../prisma/prisma.service'
+import { CreateUserCommand } from '../../users/commands/create-user.command'
+import { CreatedUser } from '../../users/handlers/create-user.handler'
 import { RegisterCommand } from '../commands/register.command'
 
 @CommandHandler(RegisterCommand)
 export class RegisterHandler implements ICommandHandler<RegisterCommand> {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly commandBus: CommandBus,
     private readonly jwt: JwtService,
   ) {}
 
   async execute(command: RegisterCommand): Promise<{ token: string }> {
-    const existing = await this.prisma.user.findUnique({ where: { email: command.email } })
-    if (existing) {
-      throw new ConflictException('User with this email already exists')
-    }
-
-    const hashed = await bcrypt.hash(command.password, 10)
-    const user = await this.prisma.user.create({
-      data: { email: command.email, password: hashed },
-    })
+    const user = await this.commandBus.execute<CreateUserCommand, CreatedUser>(
+      new CreateUserCommand(command.email, command.password),
+    )
 
     return { token: this.jwt.sign({ sub: user.id, email: user.email }) }
   }
