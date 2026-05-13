@@ -30,3 +30,13 @@ Components default to **React Server Components** — add `'use client'` only wh
 - `src/app/layout.tsx` — root layout; sets `<html lang="ru">` and global metadata
 - `src/app/globals.css` — global reset only; component styles go alongside components
 - No `src/pages/` directory — Pages Router is not used
+
+## UI changes — Definition of Done
+
+**Every UI change, no matter how small, MUST satisfy all of the following before the task is considered complete:**
+
+1. **Visual test via Playwright MCP** — the dev server is already running, so use Playwright MCP tools (`mcp__playwright__browser_navigate`, `mcp__playwright__browser_take_screenshot`, `mcp__playwright__browser_snapshot`, etc.) directly to open the affected page, interact with it, and verify the change looks and behaves correctly. Do NOT start or restart the dev server.
+
+2. **UX/UI review via `ui-ux-pro-max` skill** — invoke `/ui-ux-pro-max` (or call the skill programmatically) to review the changed components against UX best-practices (spacing, typography, colour contrast, interaction states, accessibility). Address any issues raised before marking the task done.
+
+A task that touches the UI is **not complete** until both checks have been performed and any found issues resolved.
