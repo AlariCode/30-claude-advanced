@@ -1,7 +1,9 @@
 # Dependencies
 node_modules
-.pnp
+.pnpw
 .pnp.js
+/screenshot
+.playwright-mcp
 
 # Build outputs
 .next
