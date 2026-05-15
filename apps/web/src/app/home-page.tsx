@@ -1,6 +1,7 @@
 'use client'
 
 import { Button, Card, Spinner } from '@heroui/react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { clearToken, getEmailFromToken, getToken } from '@/lib/auth'
@@ -66,31 +67,33 @@ function formatDate(dateString: string) {
 
 function MeetingCard({ meeting, highlight }: { meeting: Meeting; highlight?: boolean }) {
   return (
-    <div
-      className="rounded-xl px-4 py-3 flex flex-col gap-1"
-      style={{
-        background: highlight
-          ? 'color-mix(in oklch, var(--accent) 10%, transparent)'
-          : 'color-mix(in oklch, var(--foreground) 5%, transparent)',
-        border: highlight
-          ? '1px solid color-mix(in oklch, var(--accent) 30%, transparent)'
-          : '1px solid transparent',
-      }}
-    >
-      <p className="font-medium text-sm" style={{ color: 'var(--foreground)' }}>
-        {meeting.title}
-      </p>
-      <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--muted)' }}>
-        <CalendarIcon />
-        <span>{formatDate(meeting.date)}</span>
-      </div>
-      {meeting.participants.length > 0 && (
+    <Link href={`/meetings/${meeting.id}`} className="block no-underline">
+      <div
+        className="rounded-xl px-4 py-3 flex flex-col gap-1 transition-colors"
+        style={{
+          background: highlight
+            ? 'color-mix(in oklch, var(--accent) 10%, transparent)'
+            : 'color-mix(in oklch, var(--foreground) 5%, transparent)',
+          border: highlight
+            ? '1px solid color-mix(in oklch, var(--accent) 30%, transparent)'
+            : '1px solid transparent',
+        }}
+      >
+        <p className="font-medium text-sm" style={{ color: 'var(--foreground)' }}>
+          {meeting.title}
+        </p>
         <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--muted)' }}>
-          <UsersIcon />
-          <span>{meeting.participants.join(', ')}</span>
+          <CalendarIcon />
+          <span>{formatDate(meeting.date)}</span>
         </div>
-      )}
-    </div>
+        {meeting.participants.length > 0 && (
+          <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--muted)' }}>
+            <UsersIcon />
+            <span>{meeting.participants.join(', ')}</span>
+          </div>
+        )}
+      </div>
+    </Link>
   )
 }
 
@@ -110,7 +113,7 @@ export function HomePage() {
 
     setEmail(getEmailFromToken(token))
 
-    fetch('http://localhost:3001/meetings', {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/meetings`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (res) => {

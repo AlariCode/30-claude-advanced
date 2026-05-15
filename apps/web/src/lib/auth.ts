@@ -23,3 +23,12 @@ export function getEmailFromToken(token: string): string | null {
     return null
   }
 }
+
+export function getUserIdFromToken(token: string): string | null {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.sub ?? null
+  } catch {
+    return null
+  }
+}
