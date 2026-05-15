@@ -197,3 +197,7 @@ JWT_SECRET="..."
 - `src/app.module.ts` — root module, imports all feature modules
 - `nest-cli.json` — NestJS CLI config (`deleteOutDir: true` clears `dist/` on each build)
 - `test/jest-e2e.json` — Jest config for e2e tests
+
+## File upload
+
+Use this research for it: @docs/research-meeting-file-upload.md
