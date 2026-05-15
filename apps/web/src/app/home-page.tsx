@@ -69,7 +69,7 @@ function MeetingCard({ meeting, highlight }: { meeting: Meeting; highlight?: boo
   return (
     <Link href={`/meetings/${meeting.id}`} className="block no-underline">
       <div
-        className="rounded-xl px-4 py-3 flex flex-col gap-1 transition-colors cursor-pointer"
+        className="rounded-xl px-4 py-3 flex flex-col gap-1 transition-colors"
         style={{
           background: highlight
             ? 'color-mix(in oklch, var(--accent) 10%, transparent)'
@@ -113,7 +113,7 @@ export function HomePage() {
 
     setEmail(getEmailFromToken(token))
 
-    fetch('http://localhost:3001/meetings', {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/meetings`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (res) => {

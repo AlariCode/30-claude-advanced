@@ -14,6 +14,7 @@ async function bootstrap() {
   await app.register(import('@fastify/cors'), {
     origin: 'http://localhost:3000',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Authorization', 'Content-Type'],
   })
   await app.register(import('@fastify/multipart'), {
     limits: { fileSize: 100 * 1_024 * 1_024, files: 1 },
