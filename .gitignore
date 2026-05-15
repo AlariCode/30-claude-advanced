@@ -30,6 +30,9 @@ pnpm-debug.log*
 .cache
 .eslintcache
 
+# TypeScript build info
+*.tsbuildinfo
+
 # OS
 .DS_Store
 Thumbs.db
