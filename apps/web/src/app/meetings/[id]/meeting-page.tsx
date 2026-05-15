@@ -1,6 +1,6 @@
 'use client'
 
-import { Button, Card, Spinner } from '@heroui/react'
+import { AlertDialog, Button, Card, Spinner } from '@heroui/react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
@@ -277,7 +277,6 @@ function FileRow({
   }
 
   async function handleDelete() {
-    if (!window.confirm(`Удалить файл «${file.originalName}»?`)) return
     setDeleting(true)
     const res = await fetch(`${API}/meetings/${meetingId}/files/${file.id}`, {
       method: 'DELETE',
@@ -323,16 +322,42 @@ function FileRow({
           <DownloadIcon />
         </Button>
         {isOwner && (
-          <Button
-            size="sm"
-            variant="ghost"
-            isDisabled={deleting}
-            onPress={handleDelete}
-            aria-label={`Удалить ${file.originalName}`}
-            style={{ color: 'var(--danger)' }}
-          >
-            {deleting ? <Spinner size="sm" /> : <TrashIcon />}
-          </Button>
+          <AlertDialog>
+            <Button
+              size="sm"
+              variant="ghost"
+              isDisabled={deleting}
+              aria-label={`Удалить ${file.originalName}`}
+              style={{ color: 'var(--danger)' }}
+            >
+              {deleting ? <Spinner size="sm" /> : <TrashIcon />}
+            </Button>
+            <AlertDialog.Backdrop>
+              <AlertDialog.Container>
+                <AlertDialog.Dialog className="sm:max-w-[400px]">
+                  <AlertDialog.CloseTrigger />
+                  <AlertDialog.Header>
+                    <AlertDialog.Icon status="danger" />
+                    <AlertDialog.Heading>Удалить файл?</AlertDialog.Heading>
+                  </AlertDialog.Header>
+                  <AlertDialog.Body>
+                    <p>
+                      Файл <strong>{file.originalName}</strong> будет удалён без возможности
+                      восстановления.
+                    </p>
+                  </AlertDialog.Body>
+                  <AlertDialog.Footer>
+                    <Button slot="close" variant="tertiary">
+                      Отмена
+                    </Button>
+                    <Button slot="close" variant="danger" onPress={handleDelete}>
+                      Удалить
+                    </Button>
+                  </AlertDialog.Footer>
+                </AlertDialog.Dialog>
+              </AlertDialog.Container>
+            </AlertDialog.Backdrop>
+          </AlertDialog>
         )}
       </div>
     </div>
