@@ -1,5 +1,4 @@
 import * as fs from 'fs'
-import * as path from 'path'
 import { ValidationPipe } from '@nestjs/common'
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify'
 import { Test, TestingModule } from '@nestjs/testing'
@@ -63,7 +62,7 @@ describe('MeetingFiles (e2e)', () => {
   })
 
   describe('POST /meetings/:id/files', () => {
-    it('201: загружает файл и возвращает метаданные', async () => {
+    it('201: загружает файл и возвращает метаданные без filePath', async () => {
       const res = await request(app.getHttpServer())
         .post(`/meetings/${meetingId}/files`)
         .set('Authorization', `Bearer ${token}`)
@@ -81,6 +80,7 @@ describe('MeetingFiles (e2e)', () => {
       expect(res.body).toHaveProperty('id')
       expect(res.body).toHaveProperty('size')
       expect(res.body).toHaveProperty('uploadedAt')
+      expect(res.body).not.toHaveProperty('filePath')
     })
 
     it('400: недопустимый MIME-тип — возвращает 400', async () => {
@@ -106,6 +106,17 @@ describe('MeetingFiles (e2e)', () => {
         .expect(400)
     })
 
+    it('404: несуществующая встреча — возвращает 404', async () => {
+      await request(app.getHttpServer())
+        .post('/meetings/nonexistent-id/files')
+        .set('Authorization', `Bearer ${token}`)
+        .attach('file', Buffer.from('hello'), {
+          filename: 'test.txt',
+          contentType: 'text/plain',
+        })
+        .expect(404)
+    })
+
     it('401: запрос без токена', async () => {
       await request(app.getHttpServer())
         .post(`/meetings/${meetingId}/files`)
@@ -118,7 +129,7 @@ describe('MeetingFiles (e2e)', () => {
   })
 
   describe('GET /meetings/:id/files', () => {
-    it('200: возвращает список файлов встречи', async () => {
+    it('200: возвращает список файлов без filePath', async () => {
       const res = await request(app.getHttpServer())
         .get(`/meetings/${meetingId}/files`)
         .set('Authorization', `Bearer ${token}`)
@@ -133,6 +144,7 @@ describe('MeetingFiles (e2e)', () => {
       })
       expect(res.body[0]).toHaveProperty('id')
       expect(res.body[0]).toHaveProperty('size')
+      expect(res.body[0]).not.toHaveProperty('filePath')
     })
 
     it('200: загруженный файл появляется в списке', async () => {
@@ -154,12 +166,19 @@ describe('MeetingFiles (e2e)', () => {
       expect(names).toContain('second.txt')
     })
 
+    it('404: несуществующая встреча — возвращает 404', async () => {
+      await request(app.getHttpServer())
+        .get('/meetings/nonexistent-id/files')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(404)
+    })
+
     it('401: запрос без токена', async () => {
       await request(app.getHttpServer()).get(`/meetings/${meetingId}/files`).expect(401)
     })
   })
 
-  describe('Путь /meetings/:id/files — сохранение на диск', () => {
+  describe('Сохранение на диск', () => {
     it('файл физически создаётся в UPLOAD_DIR после загрузки', async () => {
       const res = await request(app.getHttpServer())
         .post(`/meetings/${meetingId}/files`)
@@ -170,8 +189,10 @@ describe('MeetingFiles (e2e)', () => {
         })
         .expect(201)
 
-      const filePath: string = res.body.filePath
-      expect(fs.existsSync(path.resolve(filePath))).toBe(true)
+      // filePath не в ответе — проверяем через БД напрямую
+      const record = await prisma.meetingFile.findUnique({ where: { id: res.body.id } })
+      expect(record).not.toBeNull()
+      expect(fs.existsSync(record!.filePath)).toBe(true)
     })
   })
 })

@@ -5,6 +5,8 @@ import { JwtGuard } from '../auth/guards/jwt.guard'
 import { UploadFileCommand } from './commands/upload-file.command'
 import { GetMeetingFilesQuery } from './queries/get-meeting-files.query'
 
+type AuthRequest = FastifyRequest & { user: { id: string; email: string } }
+
 const ALLOWED_MIMES = new Set([
   'video/mp4',
   'video/quicktime',
@@ -28,7 +30,7 @@ export class MeetingFileController {
   ) {}
 
   @Post(':id/files')
-  async uploadFile(@Req() req: FastifyRequest, @Param('id') meetingId: string) {
+  async uploadFile(@Req() req: AuthRequest, @Param('id') meetingId: string) {
     const data = await req.file()
     if (!data) throw new BadRequestException('File is required')
 
@@ -38,12 +40,12 @@ export class MeetingFileController {
     }
 
     return this.commandBus.execute(
-      new UploadFileCommand(meetingId, data.filename, data.mimetype, data.file),
+      new UploadFileCommand(meetingId, req.user.id, data.filename, data.mimetype, data.file),
     )
   }
 
   @Get(':id/files')
-  getFiles(@Param('id') meetingId: string) {
-    return this.queryBus.execute(new GetMeetingFilesQuery(meetingId))
+  getFiles(@Req() req: AuthRequest, @Param('id') meetingId: string) {
+    return this.queryBus.execute(new GetMeetingFilesQuery(meetingId, req.user.id))
   }
 }
