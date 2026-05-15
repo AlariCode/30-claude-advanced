@@ -13,6 +13,7 @@
     "test:e2e": "jest --config test/jest-e2e.json --runInBand"
   },
   "dependencies": {
+    "@fastify/multipart": "^10.0.0",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/cqrs": "^11.0.3",
