@@ -295,6 +295,15 @@ function FileUploadZone({
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const xhrRef = useRef<XMLHttpRequest | null>(null)
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      xhrRef.current?.abort()
+      if (successTimerRef.current) clearTimeout(successTimerRef.current)
+    }
+  }, [])
 
   function validateFile(file: File): string | null {
     if (!ALLOWED_MIMES.has(file.type)) {
@@ -321,6 +330,7 @@ function FileUploadZone({
     formData.append('file', file)
 
     const xhr = new XMLHttpRequest()
+    xhrRef.current = xhr
     xhr.open('POST', `${API}/meetings/${meetingId}/files`)
     xhr.setRequestHeader('Authorization', `Bearer ${token}`)
 
@@ -335,7 +345,7 @@ function FileUploadZone({
       if (xhr.status === 201) {
         onUploaded(JSON.parse(xhr.responseText) as MeetingFile)
         setSuccess(true)
-        setTimeout(() => setSuccess(false), 2500)
+        successTimerRef.current = setTimeout(() => setSuccess(false), 2500)
       } else {
         try {
           const body = JSON.parse(xhr.responseText) as { message?: string | string[] }
@@ -431,6 +441,7 @@ function FileUploadZone({
         <div
           className="rounded-full overflow-hidden"
           role="progressbar"
+          aria-label="Прогресс загрузки файла"
           aria-valuenow={progress ?? 0}
           aria-valuemin={0}
           aria-valuemax={100}
@@ -451,7 +462,6 @@ function FileUploadZone({
           className="text-xs px-1 flex items-center gap-1"
           style={{ color: 'var(--success, #16a34a)' }}
           role="status"
-          aria-live="polite"
         >
           <svg
             width="12"

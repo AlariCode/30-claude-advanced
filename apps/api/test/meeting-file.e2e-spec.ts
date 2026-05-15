@@ -175,20 +175,21 @@ describe('MeetingFiles (e2e)', () => {
         })
         .expect(201)
 
-      const res = await request(app.getHttpServer())
-        .get(`/meetings/${meetingId}/files`)
-        .set('Authorization', `Bearer ${ownerToken}`)
-        .expect(200)
+      try {
+        const res = await request(app.getHttpServer())
+          .get(`/meetings/${meetingId}/files`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .expect(200)
 
-      const dates = res.body.map((f: { uploadedAt: string }) => new Date(f.uploadedAt).getTime())
-      for (let i = 1; i < dates.length; i++) {
-        expect(dates[i - 1]).toBeGreaterThanOrEqual(dates[i])
+        const dates = res.body.map((f: { uploadedAt: string }) => new Date(f.uploadedAt).getTime())
+        for (let i = 1; i < dates.length; i++) {
+          expect(dates[i - 1]).toBeGreaterThanOrEqual(dates[i])
+        }
+      } finally {
+        await request(app.getHttpServer())
+          .delete(`/meetings/${meetingId}/files/${secondUpload.body.id}`)
+          .set('Authorization', `Bearer ${ownerToken}`)
       }
-
-      await request(app.getHttpServer())
-        .delete(`/meetings/${meetingId}/files/${secondUpload.body.id}`)
-        .set('Authorization', `Bearer ${ownerToken}`)
-        .expect(204)
     })
 
     it('404: участник не может получить список', async () => {
@@ -376,7 +377,7 @@ describe('MeetingFiles (e2e)', () => {
     })
 
     it('400: application/zip отклоняется', async () => {
-      await request(app.getHttpServer())
+      const res = await request(app.getHttpServer())
         .post(`/meetings/${meetingId}/files`)
         .set('Authorization', `Bearer ${ownerToken}`)
         .attach('file', Buffer.from('zip'), {
@@ -384,6 +385,9 @@ describe('MeetingFiles (e2e)', () => {
           contentType: 'application/zip',
         })
         .expect(400)
+
+      expect(res.body).toHaveProperty('message')
+      expect(res.body.message).toMatch(/application\/zip/)
     })
 
     const allowedTypes: Array<{ filename: string; contentType: string }> = [
