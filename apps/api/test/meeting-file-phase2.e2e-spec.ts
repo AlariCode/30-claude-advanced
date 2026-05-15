@@ -90,6 +90,7 @@ describe('MeetingFiles Phase 2 (e2e)', () => {
 
       expect(res.headers['content-disposition']).toMatch(/attachment/)
       expect(res.headers['content-disposition']).toMatch(/sample\.txt/)
+      expect(res.headers['content-disposition']).toMatch(/filename\*=UTF-8/)
       expect(res.headers['content-type']).toMatch(/text\/plain/)
     })
 
@@ -117,6 +118,26 @@ describe('MeetingFiles Phase 2 (e2e)', () => {
         .expect(404)
     })
 
+    it('404: файл удалён с диска — возвращает 404', async () => {
+      const uploadRes = await request(app.getHttpServer())
+        .post(`/meetings/${meetingId}/files`)
+        .set('Authorization', `Bearer ${token}`)
+        .attach('file', Buffer.from('orphan'), {
+          filename: 'orphan.txt',
+          contentType: 'text/plain',
+        })
+        .expect(201)
+
+      const orphanId = uploadRes.body.id
+      const record = await prisma.meetingFile.findUnique({ where: { id: orphanId } })
+      await fs.promises.unlink(record!.filePath)
+
+      await request(app.getHttpServer())
+        .get(`/meetings/${meetingId}/files/${orphanId}/download`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(404)
+    })
+
     it('401: запрос без токена', async () => {
       await request(app.getHttpServer())
         .get(`/meetings/${meetingId}/files/${fileId}/download`)
@@ -139,14 +160,14 @@ describe('MeetingFiles Phase 2 (e2e)', () => {
       deleteFileId = res.body.id
     })
 
-    it('200: владелец удаляет файл — файл исчезает из БД и с диска', async () => {
+    it('204: владелец удаляет файл — файл исчезает из БД и с диска', async () => {
       const record = await prisma.meetingFile.findUnique({ where: { id: deleteFileId } })
       const filePath = record!.filePath
 
       await request(app.getHttpServer())
         .delete(`/meetings/${meetingId}/files/${deleteFileId}`)
         .set('Authorization', `Bearer ${token}`)
-        .expect(200)
+        .expect(204)
 
       const deleted = await prisma.meetingFile.findUnique({ where: { id: deleteFileId } })
       expect(deleted).toBeNull()

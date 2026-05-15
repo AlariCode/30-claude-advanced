@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Post,
   Req,
@@ -73,13 +74,17 @@ export class MeetingFileController {
     const file = await this.queryBus.execute(new GetFileQuery(fileId, meetingId, req.user.id))
 
     const encoded = encodeURIComponent(file.originalName)
-    res.header('Content-Disposition', `attachment; filename*=UTF-8''${encoded}`)
+    res.header(
+      'Content-Disposition',
+      `attachment; filename="${file.originalName}"; filename*=UTF-8''${encoded}`,
+    )
     res.header('Content-Type', file.mimeType)
 
     return new StreamableFile(createReadStream(file.filePath))
   }
 
   @Delete(':id/files/:fileId')
+  @HttpCode(204)
   deleteFile(
     @Req() req: AuthRequest,
     @Param('id') meetingId: string,

@@ -1,3 +1,4 @@
+import * as fs from 'fs'
 import { NotFoundException } from '@nestjs/common'
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs'
 import { PrismaService } from '../../prisma/prisma.service'
@@ -17,6 +18,10 @@ export class GetFileHandler implements IQueryHandler<GetFileQuery> {
     })
 
     if (!file) throw new NotFoundException('File not found')
+
+    await fs.promises.access(file.filePath).catch(() => {
+      throw new NotFoundException('File not found on disk')
+    })
 
     return file
   }

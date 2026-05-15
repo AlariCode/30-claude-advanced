@@ -18,11 +18,11 @@ export class DeleteFileHandler implements ICommandHandler<DeleteFileCommand> {
     if (!file) throw new NotFoundException('File not found')
     if (file.meeting.ownerId !== command.userId) throw new ForbiddenException()
 
-    await fs.promises.unlink(file.filePath).catch(() => null)
-    await fs.promises.rmdir(path.dirname(file.filePath)).catch(() => null)
-
+    // Delete DB record first — if disk cleanup fails, orphaned file is recoverable;
+    // if we deleted disk first and DB fails, the endpoint would serve a broken record.
     await this.prisma.meetingFile.delete({ where: { id: file.id } })
 
-    return { deleted: true }
+    await fs.promises.unlink(file.filePath).catch(() => null)
+    await fs.promises.rm(path.dirname(file.filePath), { recursive: false }).catch(() => null)
   }
 }
