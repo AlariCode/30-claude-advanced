@@ -11,7 +11,10 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter())
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }))
-  await app.register(import('@fastify/cors'), { origin: 'http://localhost:3000' })
+  await app.register(import('@fastify/cors'), {
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  })
   await app.register(import('@fastify/multipart'), {
     limits: { fileSize: 100 * 1_024 * 1_024, files: 1 },
   })
