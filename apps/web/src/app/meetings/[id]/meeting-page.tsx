@@ -3,7 +3,7 @@
 import { AlertDialog, Button, Card, Spinner } from '@heroui/react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { clearToken, getEmailFromToken, getToken, getUserIdFromToken } from '@/lib/auth'
 
 interface Meeting {
@@ -244,6 +244,250 @@ function TrashIcon() {
   )
 }
 
+const ALLOWED_MIMES = new Set([
+  'video/mp4',
+  'video/quicktime',
+  'video/webm',
+  'audio/mpeg',
+  'audio/mp4',
+  'audio/wav',
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain',
+])
+
+const MAX_FILE_SIZE = 100 * 1024 * 1024
+
+function UploadIcon() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+  )
+}
+
+function FileUploadZone({
+  meetingId,
+  token,
+  onUploaded,
+}: {
+  meetingId: string
+  token: string
+  onUploaded: (file: MeetingFile) => void
+}) {
+  const [isDragging, setIsDragging] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
+  const [progress, setProgress] = useState<number | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  function validateFile(file: File): string | null {
+    if (!ALLOWED_MIMES.has(file.type)) {
+      return 'Недопустимый тип файла. Разрешены: PDF, Word, Excel, PowerPoint, видео (MP4, MOV, WebM), аудио (MP3, WAV)'
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return `Файл слишком большой: ${formatSize(file.size)}. Максимум — 100 МБ`
+    }
+    return null
+  }
+
+  function uploadFile(file: File) {
+    const err = validateFile(file)
+    if (err) {
+      setError(err)
+      setSuccess(false)
+      return
+    }
+    setError(null)
+    setSuccess(false)
+    setProgress(0)
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', `${API}/meetings/${meetingId}/files`)
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        setProgress(Math.round((e.loaded / e.total) * 100))
+      }
+    }
+
+    xhr.onload = () => {
+      setProgress(null)
+      if (xhr.status === 201) {
+        onUploaded(JSON.parse(xhr.responseText) as MeetingFile)
+        setSuccess(true)
+        setTimeout(() => setSuccess(false), 2500)
+      } else {
+        try {
+          const body = JSON.parse(xhr.responseText) as { message?: string | string[] }
+          const msg = Array.isArray(body.message) ? body.message[0] : body.message
+          setError(msg ?? 'Ошибка загрузки файла')
+        } catch {
+          setError('Ошибка загрузки файла')
+        }
+      }
+    }
+
+    xhr.onerror = () => {
+      setProgress(null)
+      setError('Ошибка сети при загрузке файла')
+    }
+
+    xhr.send(formData)
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setIsDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) uploadFile(file)
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragging(false)
+    }
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) uploadFile(file)
+    e.target.value = ''
+  }
+
+  const isUploading = progress !== null
+  const isActive = isDragging || isHovered
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div
+        role="button"
+        tabIndex={isUploading ? -1 : 0}
+        aria-label="Перетащите файл или нажмите для выбора"
+        aria-disabled={isUploading}
+        onClick={() => !isUploading && inputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (!isUploading && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault()
+            inputRef.current?.click()
+          }
+        }}
+        onMouseEnter={() => !isUploading && setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        className="rounded-xl flex flex-col items-center justify-center gap-2 py-8 px-4 transition-colors select-none focus-visible:outline-2 focus-visible:outline-offset-2"
+        style={{
+          border: `2px dashed ${isActive ? 'var(--accent)' : 'color-mix(in oklch, var(--foreground) 20%, transparent)'}`,
+          background: isActive
+            ? 'color-mix(in oklch, var(--accent) 8%, transparent)'
+            : 'color-mix(in oklch, var(--foreground) 2%, transparent)',
+          outlineColor: 'var(--accent)',
+          color: 'var(--muted)',
+          cursor: isUploading ? 'default' : 'pointer',
+        }}
+      >
+        {isUploading ? <Spinner size="md" /> : <UploadIcon />}
+        {isUploading ? (
+          <span className="text-sm" style={{ color: 'var(--foreground)' }}>
+            Загрузка... {progress}%
+          </span>
+        ) : (
+          <>
+            <span className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+              Перетащите файл или нажмите для выбора
+            </span>
+            <span className="text-xs">PDF, Word, Excel, PowerPoint, видео, аудио · до 100 МБ</span>
+          </>
+        )}
+      </div>
+
+      {isUploading && (
+        <div
+          className="rounded-full overflow-hidden"
+          role="progressbar"
+          aria-valuenow={progress ?? 0}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          style={{
+            height: 4,
+            background: 'color-mix(in oklch, var(--foreground) 10%, transparent)',
+          }}
+        >
+          <div
+            className="h-full transition-all duration-150 motion-reduce:transition-none"
+            style={{ width: `${progress}%`, background: 'var(--accent)' }}
+          />
+        </div>
+      )}
+
+      {success && (
+        <p
+          className="text-xs px-1 flex items-center gap-1"
+          style={{ color: 'var(--success, #16a34a)' }}
+          role="status"
+          aria-live="polite"
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          Файл успешно загружен
+        </p>
+      )}
+
+      {error && (
+        <p className="text-xs px-1" style={{ color: 'var(--danger)' }} role="alert">
+          {error}
+        </p>
+      )}
+
+      <input
+        ref={inputRef}
+        type="file"
+        className="sr-only"
+        accept={[...ALLOWED_MIMES].join(',')}
+        onChange={handleChange}
+        tabIndex={-1}
+      />
+    </div>
+  )
+}
+
 function FileRow({
   file,
   meetingId,
@@ -470,6 +714,10 @@ export function MeetingPage() {
     setFiles((prev) => prev.filter((f) => f.id !== fileId))
   }
 
+  function handleFileUploaded(file: MeetingFile) {
+    setFiles((prev) => [file, ...prev])
+  }
+
   const isOwner = !!currentUserId && !!meeting && meeting.ownerId === currentUserId
 
   if (isLoadingMeeting) {
@@ -580,7 +828,11 @@ export function MeetingPage() {
                   : `${files.length} ${files.length === 1 ? 'файл' : files.length < 5 ? 'файла' : 'файлов'}`}
             </Card.Description>
           </Card.Header>
-          <Card.Content>
+          <Card.Content className="flex flex-col gap-4">
+            {isOwner && token && (
+              <FileUploadZone meetingId={meetingId} token={token} onUploaded={handleFileUploaded} />
+            )}
+
             {isLoadingFiles ? (
               <div className="flex justify-center py-6">
                 <Spinner size="md" />
@@ -590,8 +842,8 @@ export function MeetingPage() {
                 {filesError}
               </p>
             ) : files.length === 0 ? (
-              <p className="text-sm text-center py-6" style={{ color: 'var(--muted)' }}>
-                Файлы ещё не загружены
+              <p className="text-sm text-center py-4" style={{ color: 'var(--muted)' }}>
+                {isOwner ? 'Загрузите первый файл' : 'Файлы ещё не загружены'}
               </p>
             ) : (
               <div className="flex flex-col gap-2">
