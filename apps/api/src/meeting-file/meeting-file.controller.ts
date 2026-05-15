@@ -1,8 +1,23 @@
-import { BadRequestException, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common'
+import {
+  BadRequestException,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Req,
+  Res,
+  StreamableFile,
+  UseGuards,
+} from '@nestjs/common'
 import { CommandBus, QueryBus } from '@nestjs/cqrs'
-import { FastifyRequest } from 'fastify'
+import { FastifyReply, FastifyRequest } from 'fastify'
+import { createReadStream } from 'fs'
 import { JwtGuard } from '../auth/guards/jwt.guard'
+import { DeleteFileCommand } from './commands/delete-file.command'
 import { UploadFileCommand } from './commands/upload-file.command'
+import { GetFileQuery } from './queries/get-file.query'
 import { GetMeetingFilesQuery } from './queries/get-meeting-files.query'
 
 type AuthRequest = FastifyRequest & { user: { id: string; email: string } }
@@ -47,5 +62,34 @@ export class MeetingFileController {
   @Get(':id/files')
   getFiles(@Req() req: AuthRequest, @Param('id') meetingId: string) {
     return this.queryBus.execute(new GetMeetingFilesQuery(meetingId, req.user.id))
+  }
+
+  @Get(':id/files/:fileId/download')
+  async downloadFile(
+    @Req() req: AuthRequest,
+    @Param('id') meetingId: string,
+    @Param('fileId') fileId: string,
+    @Res({ passthrough: true }) res: FastifyReply,
+  ) {
+    const file = await this.queryBus.execute(new GetFileQuery(fileId, meetingId, req.user.id))
+
+    const encoded = encodeURIComponent(file.originalName)
+    res.header(
+      'Content-Disposition',
+      `attachment; filename="${file.originalName}"; filename*=UTF-8''${encoded}`,
+    )
+    res.header('Content-Type', file.mimeType)
+
+    return new StreamableFile(createReadStream(file.filePath))
+  }
+
+  @Delete(':id/files/:fileId')
+  @HttpCode(204)
+  deleteFile(
+    @Req() req: AuthRequest,
+    @Param('id') meetingId: string,
+    @Param('fileId') fileId: string,
+  ) {
+    return this.commandBus.execute(new DeleteFileCommand(fileId, meetingId, req.user.id))
   }
 }
