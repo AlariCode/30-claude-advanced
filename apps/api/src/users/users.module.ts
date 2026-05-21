@@ -6,6 +6,7 @@ import { CreateUserHandler } from './handlers/create-user.handler'
 import { FindUserByEmailHandler } from './handlers/find-user-by-email.handler'
 import { GetMeHandler } from './handlers/get-me.handler'
 import { UpdateProfileHandler } from './handlers/update-profile.handler'
+import { UploadAvatarHandler } from './handlers/upload-avatar.handler'
 import { UsersController } from './users.controller'
 
 @Module({
@@ -16,6 +17,7 @@ import { UsersController } from './users.controller'
     FindUserByEmailHandler,
     GetMeHandler,
     UpdateProfileHandler,
+    UploadAvatarHandler,
     JwtGuard,
   ],
 })

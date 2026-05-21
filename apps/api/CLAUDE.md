@@ -38,21 +38,23 @@ Global database access module. Provides `PrismaService` (Prisma Client wrapper).
 
 ### `UsersModule`
 
-Owns all user-related persistence and exposes `GET /users/me` and `PATCH /users/me` HTTP endpoints protected by `JwtGuard`.
+Owns all user-related persistence and exposes `GET /users/me`, `PATCH /users/me`, and `POST /users/me/avatar` HTTP endpoints protected by `JwtGuard`.
 
-| File                                     | Responsibility                                                        |
-| ---------------------------------------- | --------------------------------------------------------------------- |
-| `commands/create-user.command.ts`        | Command: create a user by email + raw password                        |
-| `commands/update-profile.command.ts`     | Command: update name/avatarUrl for a user                             |
-| `queries/find-user-by-email.query.ts`    | Query: look up a user record by email                                 |
-| `queries/get-me.query.ts`                | Query: get user profile by id                                         |
-| `handlers/create-user.handler.ts`        | Hashes password, inserts row, throws `ConflictException` on duplicate |
-| `handlers/find-user-by-email.handler.ts` | Returns `UserRecord \| null`                                          |
-| `handlers/get-me.handler.ts`             | Returns `UserProfile \| null` by userId                               |
-| `handlers/update-profile.handler.ts`     | Updates name/avatarUrl, returns updated `UserProfile`                 |
-| `dto/update-profile.dto.ts`              | Validation DTO for PATCH /users/me                                    |
-| `users.controller.ts`                    | `GET /users/me`, `PATCH /users/me` — JWT-protected HTTP endpoints     |
-| `types.ts`                               | Shared `UserProfile` interface                                        |
+| File                                     | Responsibility                                                                        |
+| ---------------------------------------- | ------------------------------------------------------------------------------------- |
+| `commands/create-user.command.ts`        | Command: create a user by email + raw password                                        |
+| `commands/update-profile.command.ts`     | Command: update name/avatarUrl for a user                                             |
+| `commands/upload-avatar.command.ts`      | Command: upload avatar (carries userId, mimeType, fileStream)                         |
+| `queries/find-user-by-email.query.ts`    | Query: look up a user record by email                                                 |
+| `queries/get-me.query.ts`                | Query: get user profile by id                                                         |
+| `handlers/create-user.handler.ts`        | Hashes password, inserts row, throws `ConflictException` on duplicate                 |
+| `handlers/find-user-by-email.handler.ts` | Returns `UserRecord \| null`                                                          |
+| `handlers/get-me.handler.ts`             | Returns `UserProfile \| null` by userId                                               |
+| `handlers/update-profile.handler.ts`     | Updates name/avatarUrl, returns updated `UserProfile`                                 |
+| `handlers/upload-avatar.handler.ts`      | Validates mime/size, saves to `uploads/avatars/`, updates DB, deletes old file        |
+| `dto/update-profile.dto.ts`              | Validation DTO for PATCH /users/me                                                    |
+| `users.controller.ts`                    | `GET /users/me`, `PATCH /users/me`, `POST /users/me/avatar` — JWT-protected endpoints |
+| `types.ts`                               | Shared `UserProfile` interface                                                        |
 
 ### `AuthModule`
 
@@ -187,11 +189,13 @@ JWT_SECRET="..."
 
 ### Test files
 
-| File                       | Covers                                              |
-| -------------------------- | --------------------------------------------------- |
-| `test/auth.e2e-spec.ts`    | `POST /auth/register`, `POST /auth/login`           |
-| `test/meeting.e2e-spec.ts` | `POST /meeting`, `GET /meeting`, `GET /meeting/:id` |
-| `test/users.e2e-spec.ts`   | `GET /users/me`, `PATCH /users/me`                  |
+| File                            | Covers                                                                |
+| ------------------------------- | --------------------------------------------------------------------- |
+| `test/auth.e2e-spec.ts`         | `POST /auth/register`, `POST /auth/login`                             |
+| `test/meeting.e2e-spec.ts`      | `POST /meeting`, `GET /meeting`, `GET /meeting/:id`                   |
+| `test/users.e2e-spec.ts`        | `GET /users/me`, `PATCH /users/me`                                    |
+| `test/avatar.e2e-spec.ts`       | `POST /users/me/avatar` — upload, mime/size validation, DB update     |
+| `test/meeting-file.e2e-spec.ts` | `POST/GET/DELETE /meetings/:id/files`, download, mime/size validation |
 
 ### Writing new tests
 
