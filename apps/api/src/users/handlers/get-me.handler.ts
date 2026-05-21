@@ -1,7 +1,7 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs'
 import { PrismaService } from '../../prisma/prisma.service'
 import { GetMeQuery } from '../queries/get-me.query'
-import { UserProfile } from '../types'
+import { USER_PROFILE_SELECT, UserProfile } from '../types'
 
 @QueryHandler(GetMeQuery)
 export class GetMeHandler implements IQueryHandler<GetMeQuery> {
@@ -10,7 +10,7 @@ export class GetMeHandler implements IQueryHandler<GetMeQuery> {
   async execute(query: GetMeQuery): Promise<UserProfile | null> {
     return this.prisma.user.findUnique({
       where: { id: query.userId },
-      select: { id: true, email: true, name: true, avatarUrl: true },
+      select: USER_PROFILE_SELECT,
     })
   }
 }
