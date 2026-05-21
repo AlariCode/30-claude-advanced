@@ -12,8 +12,10 @@ import {
 import { CommandBus, QueryBus } from '@nestjs/cqrs'
 import { AuthRequest } from '../auth/types'
 import { JwtGuard } from '../auth/guards/jwt.guard'
+import { ChangePasswordCommand } from './commands/change-password.command'
 import { UploadAvatarCommand } from './commands/upload-avatar.command'
 import { UpdateProfileCommand } from './commands/update-profile.command'
+import { ChangePasswordDto } from './dto/change-password.dto'
 import { UpdateProfileDto } from './dto/update-profile.dto'
 import { GetMeQuery } from './queries/get-me.query'
 import { UserProfile } from './types'
@@ -46,5 +48,12 @@ export class UsersController {
     if (!data) throw new BadRequestException('File is required')
 
     return this.commandBus.execute(new UploadAvatarCommand(req.user.id, data.mimetype, data.file))
+  }
+
+  @Post('me/change-password')
+  changePassword(@Req() req: AuthRequest, @Body() dto: ChangePasswordDto): Promise<void> {
+    return this.commandBus.execute(
+      new ChangePasswordCommand(req.user.id, dto.oldPassword, dto.newPassword),
+    )
   }
 }
