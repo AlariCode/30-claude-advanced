@@ -192,13 +192,13 @@ JWT_SECRET="..."
 
 ### Test files
 
-| File                            | Covers                                                                |
-| ------------------------------- | --------------------------------------------------------------------- |
-| `test/auth.e2e-spec.ts`         | `POST /auth/register`, `POST /auth/login`                             |
-| `test/meeting.e2e-spec.ts`      | `POST /meeting`, `GET /meeting`, `GET /meeting/:id`                   |
-| `test/users.e2e-spec.ts`        | `GET /users/me`, `PATCH /users/me`                                    |
-| `test/avatar.e2e-spec.ts`       | `POST /users/me/avatar` — upload, mime/size validation, DB update     |
-| `test/meeting-file.e2e-spec.ts` | `POST/GET/DELETE /meetings/:id/files`, download, mime/size validation |
+| File                            | Covers                                                                                                           |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `test/auth.e2e-spec.ts`         | `POST /auth/register`, `POST /auth/login`                                                                        |
+| `test/meeting.e2e-spec.ts`      | `POST /meeting`, `GET /meeting`, `GET /meeting/:id`                                                              |
+| `test/users.e2e-spec.ts`        | `GET /users/me`, `PATCH /users/me`, `POST /users/me/change-password`                                             |
+| `test/avatar.e2e-spec.ts`       | `POST /users/me/avatar` — upload, mime/size validation, DB update; `GET /uploads/avatars/:file` — static serving |
+| `test/meeting-file.e2e-spec.ts` | `POST/GET/DELETE /meetings/:id/files`, download, mime/size validation                                            |
 
 ### Writing new tests
 
@@ -207,9 +207,15 @@ JWT_SECRET="..."
 - Enable `ValidationPipe({ whitelist: true })` globally to match production behaviour.
 - Clean up test data in `beforeAll` and `afterAll` using `PrismaService` obtained via `app.get(PrismaService)`.
 
+## Static file serving
+
+Uploaded files in `uploads/` are served as static assets via `@fastify/static` registered in `main.ts`. Files at `uploads/avatars/foo.jpg` are accessible at `GET /uploads/avatars/foo.jpg`.
+
+The `UPLOAD_DIR` env variable controls the root directory (default: `./uploads`). The static server maps its absolute path to the `/uploads` URL prefix.
+
 ## Key files
 
-- `src/main.ts` — bootstrap, Fastify adapter, global port config
+- `src/main.ts` — bootstrap, Fastify adapter, static assets (`@fastify/static`), global port config
 - `src/app.module.ts` — root module, imports all feature modules
 - `nest-cli.json` — NestJS CLI config (`deleteOutDir: true` clears `dist/` on each build)
 - `test/jest-e2e.json` — Jest config for e2e tests
