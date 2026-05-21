@@ -32,6 +32,7 @@ describe('Avatar Upload (e2e)', () => {
     await app.register(import('@fastify/multipart'), {
       limits: { fileSize: 512, files: 1 },
     })
+    // mirrors main.ts @fastify/static registration — must stay in sync
     await app.register(import('@fastify/static'), {
       root: path.resolve(TEST_UPLOAD_DIR),
       prefix: '/uploads',
@@ -189,7 +190,8 @@ describe('Avatar Upload (e2e)', () => {
       const avatarUrl: string = uploadRes.body.avatarUrl
       const res = await request(app.getHttpServer()).get(avatarUrl).buffer(true).expect(200)
 
-      expect(Buffer.from(res.body as ArrayBuffer).toString()).toBe('static-file-content')
+      expect(res.headers['content-type']).toMatch(/image\/jpeg/)
+      expect((res.body as Buffer).toString()).toBe('static-file-content')
     })
 
     it('404: несуществующий файл возвращает 404', async () => {
