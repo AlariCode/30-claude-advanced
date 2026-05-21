@@ -3,6 +3,10 @@ const fs = require('fs')
 
 const config = JSON.parse(fs.readFileSync('.claude/ralph.config.json', 'utf8'))
 
+if (!config.active) {
+  process.exit(0)
+}
+
 // Счётчик итераций
 const counterFile = '.claude/ralph.iterations.json'
 let counter = { count: 0 }

@@ -12,15 +12,14 @@ import {
   UseGuards,
 } from '@nestjs/common'
 import { CommandBus, QueryBus } from '@nestjs/cqrs'
-import { FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyReply } from 'fastify'
 import { createReadStream } from 'fs'
+import { AuthRequest } from '../auth/types'
 import { JwtGuard } from '../auth/guards/jwt.guard'
 import { DeleteFileCommand } from './commands/delete-file.command'
 import { UploadFileCommand } from './commands/upload-file.command'
 import { GetFileQuery } from './queries/get-file.query'
 import { GetMeetingFilesQuery } from './queries/get-meeting-files.query'
-
-type AuthRequest = FastifyRequest & { user: { id: string; email: string } }
 
 const ALLOWED_MIMES = new Set([
   'video/mp4',

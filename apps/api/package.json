@@ -10,6 +10,7 @@
     "lint:fix": "eslint \"{src,test}/**/*.ts\" --fix",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\"",
+    "test:unit": "jest --config test/jest-unit.json --runInBand",
     "test:e2e": "jest --config test/jest-e2e.json --runInBand"
   },
   "dependencies": {

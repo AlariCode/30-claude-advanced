@@ -10,6 +10,7 @@ import { RegisterHandler } from './handlers/register.handler'
   imports: [
     CqrsModule,
     JwtModule.register({
+      global: true,
       secret: process.env['JWT_SECRET'] ?? 'fallback-secret',
       signOptions: { expiresIn: '7d' },
     }),
