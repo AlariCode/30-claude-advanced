@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   NotFoundException,
   Patch,
   Post,
@@ -51,6 +52,7 @@ export class UsersController {
   }
 
   @Post('me/change-password')
+  @HttpCode(200)
   changePassword(@Req() req: AuthRequest, @Body() dto: ChangePasswordDto): Promise<void> {
     return this.commandBus.execute(
       new ChangePasswordCommand(req.user.id, dto.oldPassword, dto.newPassword),
