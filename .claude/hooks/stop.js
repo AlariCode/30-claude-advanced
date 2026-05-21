@@ -41,17 +41,9 @@ if (issues.length > 0) {
   execSync(`claude -p "${prompt}" --max-turns ${config.maxTurns}`, { stdio: 'inherit' })
 } else {
   // Milestone закрыт — сбрасываем счётчик и создаём PR
-  console.log(`✅ Milestone завершён. Создаём PR.`)
-  fs.writeFileSync(counterFile, JSON.stringify({ count: 0 }))
-  const prUrl = execSync(
-    `gh pr create --title "feat: ${config.milestone}" --body "Closes all issues in milestone: ${config.milestone}" --base main --head ${config.branch}`,
-  )
-    .toString()
-    .trim()
-
-  console.log('🔍 Запускаем финальное ревью через Opus 4.7...')
+  console.log('🔍 Запускаем финальное ревью и PR через Opus 4.7...')
   execSync(
-    `claude -p "Сделай детальное code review PR ${prUrl}. Проверь архитектуру, безопасность, производительность и соответствие PRD. Оставь комментарии прямо в PR через gh cli." --model claude-opus-4-7`,
+    `claude -p "Сделай PR в main и затем проведи детальное code review PR. Проверь архитектуру, безопасность, производительность и соответствие PRD. Оставь комментарии прямо в PR через gh cli." --model claude-opus-4-7`,
     { stdio: 'inherit' },
   )
 }
