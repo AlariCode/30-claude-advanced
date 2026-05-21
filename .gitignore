@@ -45,3 +45,6 @@ Thumbs.db
 
 # Testing
 coverage
+
+# Uploads
+apps/api/uploads/
