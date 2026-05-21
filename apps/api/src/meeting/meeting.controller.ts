@@ -1,13 +1,11 @@
 import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common'
 import { CommandBus, QueryBus } from '@nestjs/cqrs'
-import { FastifyRequest } from 'fastify'
+import { AuthRequest } from '../auth/types'
 import { JwtGuard } from '../auth/guards/jwt.guard'
 import { CreateMeetingCommand } from './commands/create-meeting.command'
 import { CreateMeetingDto } from './dto/create-meeting.dto'
 import { GetMeetingQuery } from './queries/get-meeting.query'
 import { GetMeetingsQuery } from './queries/get-meetings.query'
-
-type AuthRequest = FastifyRequest & { user: { id: string; email: string } }
 
 @Controller('meetings')
 @UseGuards(JwtGuard)

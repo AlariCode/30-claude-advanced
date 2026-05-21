@@ -45,3 +45,9 @@ Thumbs.db
 
 # Testing
 coverage
+
+# Uploads
+apps/api/uploads/
+
+# Claude Code tooling
+.claude/ralph.iterations.json
