@@ -16,6 +16,7 @@ npm run build      # nest build → dist/
 npm run start      # node dist/main (production)
 npm run lint       # eslint src/ and test/
 npm run typecheck  # tsc --noEmit
+npm run test:unit  # jest --config test/jest-unit.json --runInBand (*.spec.ts in src/)
 npm run test:e2e   # jest --config test/jest-e2e.json --runInBand
 ```
 
@@ -42,9 +43,14 @@ Owns all user-related persistence. No HTTP controller — purely internal, consu
 | File                                     | Responsibility                                                        |
 | ---------------------------------------- | --------------------------------------------------------------------- |
 | `commands/create-user.command.ts`        | Command: create a user by email + raw password                        |
+| `commands/update-profile.command.ts`     | Command: update name/avatarUrl for a user                             |
 | `queries/find-user-by-email.query.ts`    | Query: look up a user record by email                                 |
+| `queries/get-me.query.ts`                | Query: get user profile by id                                         |
 | `handlers/create-user.handler.ts`        | Hashes password, inserts row, throws `ConflictException` on duplicate |
 | `handlers/find-user-by-email.handler.ts` | Returns `UserRecord \| null`                                          |
+| `handlers/get-me.handler.ts`             | Returns `UserProfile \| null` by userId                               |
+| `handlers/update-profile.handler.ts`     | Updates name/avatarUrl, returns updated `UserProfile`                 |
+| `types.ts`                               | Shared `UserProfile` interface                                        |
 
 ### `AuthModule`
 

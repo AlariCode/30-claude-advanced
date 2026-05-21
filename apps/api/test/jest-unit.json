@@ -1,0 +1,21 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "..",
+  "testRegex": "src/.*\\.spec\\.ts$",
+  "transform": {
+    "^.+\\.ts$": [
+      "ts-jest",
+      {
+        "tsconfig": {
+          "esModuleInterop": true,
+          "module": "CommonJS",
+          "moduleResolution": "Node",
+          "experimentalDecorators": true,
+          "emitDecoratorMetadata": true,
+          "strict": true
+        }
+      }
+    ]
+  },
+  "testEnvironment": "node"
+}
