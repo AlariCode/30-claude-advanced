@@ -1,8 +1,22 @@
-import { Body, Controller, Get, NotFoundException, Patch, Req, UseGuards } from '@nestjs/common'
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  NotFoundException,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common'
 import { CommandBus, QueryBus } from '@nestjs/cqrs'
 import { AuthRequest } from '../auth/types'
 import { JwtGuard } from '../auth/guards/jwt.guard'
+import { ChangePasswordCommand } from './commands/change-password.command'
+import { UploadAvatarCommand } from './commands/upload-avatar.command'
 import { UpdateProfileCommand } from './commands/update-profile.command'
+import { ChangePasswordDto } from './dto/change-password.dto'
 import { UpdateProfileDto } from './dto/update-profile.dto'
 import { GetMeQuery } from './queries/get-me.query'
 import { UserProfile } from './types'
@@ -27,5 +41,21 @@ export class UsersController {
   @Patch('me')
   updateMe(@Req() req: AuthRequest, @Body() dto: UpdateProfileDto): Promise<UserProfile> {
     return this.commandBus.execute(new UpdateProfileCommand(req.user.id, dto.name, dto.avatarUrl))
+  }
+
+  @Post('me/avatar')
+  async uploadAvatar(@Req() req: AuthRequest): Promise<{ avatarUrl: string }> {
+    const data = await req.file()
+    if (!data) throw new BadRequestException('File is required')
+
+    return this.commandBus.execute(new UploadAvatarCommand(req.user.id, data.mimetype, data.file))
+  }
+
+  @Post('me/change-password')
+  @HttpCode(200)
+  changePassword(@Req() req: AuthRequest, @Body() dto: ChangePasswordDto): Promise<void> {
+    return this.commandBus.execute(
+      new ChangePasswordCommand(req.user.id, dto.oldPassword, dto.newPassword),
+    )
   }
 }

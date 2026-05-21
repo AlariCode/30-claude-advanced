@@ -87,4 +87,79 @@ describe('Users (e2e)', () => {
       await request(app.getHttpServer()).patch('/users/me').send({ name: 'Test' }).expect(401)
     })
   })
+
+  describe('POST /users/me/change-password', () => {
+    it('200: верный старый пароль — пароль успешно сменён', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({ email: 'changepw1@example.com', password: 'OldPass1!' })
+        .expect(201)
+
+      await request(app.getHttpServer())
+        .post('/users/me/change-password')
+        .set('Authorization', `Bearer ${res.body.token}`)
+        .send({ oldPassword: 'OldPass1!', newPassword: 'NewPass1!' })
+        .expect(200)
+
+      await prisma.user.deleteMany({ where: { email: 'changepw1@example.com' } })
+    })
+
+    it('после смены пароля вход с новым паролем успешен', async () => {
+      const regRes = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({ email: 'changepw2@example.com', password: 'InitPass1!' })
+        .expect(201)
+
+      await request(app.getHttpServer())
+        .post('/users/me/change-password')
+        .set('Authorization', `Bearer ${regRes.body.token}`)
+        .send({ oldPassword: 'InitPass1!', newPassword: 'ChangedPass1!' })
+        .expect(200)
+
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email: 'changepw2@example.com', password: 'ChangedPass1!' })
+        .expect(200)
+
+      await prisma.user.deleteMany({ where: { email: 'changepw2@example.com' } })
+    })
+
+    it('400: неверный старый пароль — возвращает ошибку', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({ email: 'changepw3@example.com', password: 'MyPass1!' })
+        .expect(201)
+
+      await request(app.getHttpServer())
+        .post('/users/me/change-password')
+        .set('Authorization', `Bearer ${res.body.token}`)
+        .send({ oldPassword: 'WrongPass1!', newPassword: 'NewPass1!' })
+        .expect(400)
+
+      await prisma.user.deleteMany({ where: { email: 'changepw3@example.com' } })
+    })
+
+    it('400: невалидное тело — newPassword отсутствует', async () => {
+      await request(app.getHttpServer())
+        .post('/users/me/change-password')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ oldPassword: 'Password1!' })
+        .expect(400)
+    })
+
+    it('400: nevалидное тело — newPassword короче 8 символов', async () => {
+      await request(app.getHttpServer())
+        .post('/users/me/change-password')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ oldPassword: 'Password1!', newPassword: 'abc' })
+        .expect(400)
+    })
+
+    it('401: запрос без токена', async () => {
+      await request(app.getHttpServer())
+        .post('/users/me/change-password')
+        .send({ oldPassword: 'Password1!', newPassword: 'NewPass1!' })
+        .expect(401)
+    })
+  })
 })
