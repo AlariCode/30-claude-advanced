@@ -4,6 +4,7 @@ node_modules
 .pnp.js
 /screenshot
 .playwright-mcp
+CLAUDE.local.md
 
 # Build outputs
 .next
