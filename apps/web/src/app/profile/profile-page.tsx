@@ -4,15 +4,9 @@ import { Button, Card, Spinner } from '@heroui/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { formatDate } from '@/lib/format'
+import type { UserProfile } from '@/lib/types'
 import { clearToken, getToken } from '@/lib/auth'
-
-interface UserProfile {
-  id: string
-  email: string
-  name: string | null
-  avatarUrl: string | null
-  createdAt: string
-}
 
 function UserAvatarIcon() {
   return (
@@ -50,14 +44,6 @@ function EditIcon() {
       <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
     </svg>
   )
-}
-
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleString('ru-RU', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
 }
 
 function ProfileField({ label, value }: { label: string; value: string }) {
