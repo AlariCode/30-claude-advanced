@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
 import { PrismaService } from '../../prisma/prisma.service'
 import { UpdateProfileCommand } from '../commands/update-profile.command'
-import { UserProfile } from '../types'
+import { USER_PROFILE_SELECT, UserProfile } from '../types'
 
 @CommandHandler(UpdateProfileCommand)
 export class UpdateProfileHandler implements ICommandHandler<UpdateProfileCommand> {
@@ -15,7 +15,7 @@ export class UpdateProfileHandler implements ICommandHandler<UpdateProfileComman
     return this.prisma.user.update({
       where: { id: command.userId },
       data,
-      select: { id: true, email: true, name: true, avatarUrl: true },
+      select: USER_PROFILE_SELECT,
     })
   }
 }

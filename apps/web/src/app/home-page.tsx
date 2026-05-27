@@ -13,6 +13,14 @@ interface Meeting {
   participants: string[]
 }
 
+interface UserProfile {
+  id: string
+  email: string
+  name: string | null
+  avatarUrl: string | null
+  createdAt: string
+}
+
 function CalendarIcon() {
   return (
     <svg
@@ -100,6 +108,7 @@ function MeetingCard({ meeting, highlight }: { meeting: Meeting; highlight?: boo
 export function HomePage() {
   const router = useRouter()
   const [email, setEmail] = useState<string | null>(null)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
@@ -113,18 +122,25 @@ export function HomePage() {
 
     setEmail(getEmailFromToken(token))
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/meetings`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(async (res) => {
-        if (res.status === 401) {
+    const headers = { Authorization: `Bearer ${token}` }
+
+    Promise.all([
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/meetings`, { headers }),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, { headers }),
+    ])
+      .then(async ([meetingsRes, profileRes]) => {
+        if (meetingsRes.status === 401 || profileRes.status === 401) {
           clearToken()
           router.replace('/login')
           return
         }
-        if (!res.ok) throw new Error('Ошибка загрузки встреч')
-        const data = await res.json()
-        setMeetings(data)
+        if (!meetingsRes.ok) throw new Error('Ошибка загрузки встреч')
+        const [meetingsData, profileData] = await Promise.all([
+          meetingsRes.json(),
+          profileRes.ok ? profileRes.json() : Promise.resolve(null),
+        ])
+        setMeetings(meetingsData)
+        setProfile(profileData)
       })
       .catch(() => setFetchError('Не удалось загрузить встречи'))
       .finally(() => setIsLoading(false))
@@ -157,7 +173,7 @@ export function HomePage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
-              className="inline-flex items-center justify-center w-10 h-10 rounded-xl"
+              className="inline-flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0"
               style={{ background: 'var(--accent)', color: 'var(--accent-foreground)' }}
             >
               <svg
@@ -181,14 +197,58 @@ export function HomePage() {
               >
                 Video Meetings
               </h1>
-              <p className="text-xs" style={{ color: 'var(--muted)' }}>
-                {email}
-              </p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onPress={handleLogout}>
-            Выйти
-          </Button>
+
+          <div className="flex items-center gap-2">
+            <Link
+              href="/profile"
+              aria-label={`Профиль: ${profile?.name ?? email}`}
+              className="flex items-center gap-2 no-underline rounded-xl px-3 py-2 min-h-[44px] transition-colors hover:bg-[color-mix(in_oklch,var(--foreground)_6%,transparent)]"
+              style={{ color: 'var(--foreground)' }}
+            >
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
+                style={{
+                  background: profile?.avatarUrl
+                    ? 'transparent'
+                    : 'color-mix(in oklch, var(--accent) 15%, transparent)',
+                  color: 'var(--accent)',
+                  border: '1.5px solid color-mix(in oklch, var(--accent) 25%, transparent)',
+                }}
+              >
+                {profile?.avatarUrl ? (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_API_URL}${profile.avatarUrl}`}
+                    alt=""
+                    aria-hidden="true"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                  </svg>
+                )}
+              </div>
+              <span className="text-xs max-w-[120px] truncate" style={{ color: 'var(--muted)' }}>
+                {profile?.name ?? email}
+              </span>
+            </Link>
+            <Button variant="outline" size="sm" onPress={handleLogout}>
+              Выйти
+            </Button>
+          </div>
         </div>
 
         {/* Recent meetings */}

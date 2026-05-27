@@ -52,6 +52,7 @@ describe('Users (e2e)', () => {
       expect(res.body).toHaveProperty('email')
       expect(res.body).toHaveProperty('name')
       expect(res.body).toHaveProperty('avatarUrl')
+      expect(res.body).toHaveProperty('createdAt')
     })
 
     it('401: без токена', async () => {
