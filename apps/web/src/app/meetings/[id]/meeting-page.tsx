@@ -8,7 +8,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { CalendarIcon, UsersIcon } from '@/components/icons'
 import { formatDateTime } from '@/lib/format'
 import type { Meeting, MeetingFile } from '@/lib/types'
-import { clearToken, getEmailFromToken, getToken, getUserIdFromToken } from '@/lib/auth'
+import { callLogout, isLoggedIn } from '@/lib/auth'
 import { FileRow } from './file-row'
 import { FileUploadZone } from './file-upload-zone'
 
@@ -19,7 +19,6 @@ export function MeetingPage() {
   const router = useRouter()
   const meetingId = params.id as string
 
-  const [token, setToken] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [email, setEmail] = useState<string | null>(null)
   const [meeting, setMeeting] = useState<Meeting | null>(null)
@@ -29,65 +28,65 @@ export function MeetingPage() {
   const [meetingError, setMeetingError] = useState<string | null>(null)
   const [filesError, setFilesError] = useState<string | null>(null)
 
-  const loadFiles = useCallback(
-    async (authToken: string) => {
-      setIsLoadingFiles(true)
-      setFilesError(null)
-      try {
-        const res = await fetch(`${API}/meetings/${meetingId}/files`, {
-          headers: { Authorization: `Bearer ${authToken}` },
-        })
-        if (!res.ok) throw new Error('Ошибка загрузки файлов')
-        setFiles(await res.json())
-      } catch {
-        setFilesError('Не удалось загрузить файлы')
-      } finally {
-        setIsLoadingFiles(false)
-      }
-    },
-    [meetingId],
-  )
+  const loadFiles = useCallback(async () => {
+    setIsLoadingFiles(true)
+    setFilesError(null)
+    try {
+      const res = await fetch(`${API}/meetings/${meetingId}/files`, { credentials: 'include' })
+      if (!res.ok) throw new Error('Ошибка загрузки файлов')
+      setFiles(await res.json())
+    } catch {
+      setFilesError('Не удалось загрузить файлы')
+    } finally {
+      setIsLoadingFiles(false)
+    }
+  }, [meetingId])
 
   useEffect(() => {
-    const t = getToken()
-    if (!t) {
+    if (!isLoggedIn()) {
       router.replace('/login')
       return
     }
-    setToken(t)
-    setEmail(getEmailFromToken(t))
-    setCurrentUserId(getUserIdFromToken(t))
 
     const controller = new AbortController()
 
-    fetch(`${API}/meetings/${meetingId}`, {
-      headers: { Authorization: `Bearer ${t}` },
-      signal: controller.signal,
-    })
-      .then(async (res) => {
-        if (res.status === 401) {
-          clearToken()
+    Promise.all([
+      fetch(`${API}/meetings/${meetingId}`, { credentials: 'include', signal: controller.signal }),
+      fetch(`${API}/users/me`, { credentials: 'include', signal: controller.signal }),
+    ])
+      .then(async ([meetingRes, meRes]) => {
+        if (meetingRes.status === 401 || meRes.status === 401) {
+          await callLogout(API ?? '')
           router.replace('/login')
           return
         }
-        if (res.status === 404) {
+        if (meetingRes.status === 404) {
           setMeetingError('Встреча не найдена')
           return
         }
-        if (!res.ok) throw new Error()
-        setMeeting(await res.json())
+        if (!meetingRes.ok) throw new Error()
+        const [meetingData, meData] = await Promise.all([
+          meetingRes.json(),
+          meRes.ok ? meRes.json() : null,
+        ])
+        setMeeting(meetingData)
+        if (meData) {
+          setEmail(meData.email as string)
+          setCurrentUserId(meData.id as string)
+        }
       })
-      .catch((err) => {
-        if (err.name !== 'AbortError') setMeetingError('Не удалось загрузить встречу')
+      .catch((err: unknown) => {
+        if ((err as { name?: string }).name !== 'AbortError')
+          setMeetingError('Не удалось загрузить встречу')
       })
       .finally(() => setIsLoadingMeeting(false))
 
-    loadFiles(t)
+    loadFiles()
     return () => controller.abort()
   }, [meetingId, router, loadFiles])
 
-  function handleLogout() {
-    clearToken()
+  async function handleLogout() {
+    await callLogout(API ?? '')
     router.push('/login')
   }
 
@@ -207,9 +206,7 @@ export function MeetingPage() {
             </Card.Description>
           </Card.Header>
           <Card.Content className="flex flex-col gap-4">
-            {isOwner && token && (
-              <FileUploadZone meetingId={meetingId} token={token} onUploaded={handleFileUploaded} />
-            )}
+            {isOwner && <FileUploadZone meetingId={meetingId} onUploaded={handleFileUploaded} />}
 
             {isLoadingFiles ? (
               <div className="flex justify-center py-6">
@@ -231,7 +228,6 @@ export function MeetingPage() {
                     file={file}
                     meetingId={meetingId}
                     isOwner={isOwner}
-                    token={token!}
                     onDelete={handleFileDeleted}
                   />
                 ))}

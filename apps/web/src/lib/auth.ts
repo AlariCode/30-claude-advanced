@@ -1,34 +1,21 @@
 'use client'
 
-const TOKEN_KEY = 'vm_token'
+const SESSION_KEY = 'vm_session'
 
-export function saveToken(token: string) {
-  localStorage.setItem(TOKEN_KEY, token)
+export function markLoggedIn(): void {
+  sessionStorage.setItem(SESSION_KEY, '1')
 }
 
-export function getToken(): string | null {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem(TOKEN_KEY)
+export function markLoggedOut(): void {
+  sessionStorage.removeItem(SESSION_KEY)
 }
 
-export function clearToken() {
-  localStorage.removeItem(TOKEN_KEY)
+export function isLoggedIn(): boolean {
+  if (typeof window === 'undefined') return false
+  return sessionStorage.getItem(SESSION_KEY) === '1'
 }
 
-export function getEmailFromToken(token: string): string | null {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    return payload.email ?? null
-  } catch {
-    return null
-  }
-}
-
-export function getUserIdFromToken(token: string): string | null {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    return payload.sub ?? null
-  } catch {
-    return null
-  }
+export async function callLogout(apiUrl: string): Promise<void> {
+  markLoggedOut()
+  await fetch(`${apiUrl}/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => null)
 }

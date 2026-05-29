@@ -5,35 +5,31 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { MeetingCard } from '@/components/meeting-card'
-import { clearToken, getEmailFromToken, getToken } from '@/lib/auth'
+import { callLogout, isLoggedIn } from '@/lib/auth'
 import type { Meeting, UserProfile } from '@/lib/types'
 
 export function HomePage() {
   const router = useRouter()
-  const [email, setEmail] = useState<string | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
 
   useEffect(() => {
-    const token = getToken()
-    if (!token) {
+    if (!isLoggedIn()) {
       router.replace('/login')
       return
     }
 
-    setEmail(getEmailFromToken(token))
-
-    const headers = { Authorization: `Bearer ${token}` }
+    const fetchOpts: RequestInit = { credentials: 'include' }
 
     Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/meetings`, { headers }),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, { headers }),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/meetings`, fetchOpts),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, fetchOpts),
     ])
       .then(async ([meetingsRes, profileRes]) => {
         if (meetingsRes.status === 401 || profileRes.status === 401) {
-          clearToken()
+          await callLogout(process.env.NEXT_PUBLIC_API_URL ?? '')
           router.replace('/login')
           return
         }
@@ -49,8 +45,8 @@ export function HomePage() {
       .finally(() => setIsLoading(false))
   }, [router])
 
-  function handleLogout() {
-    clearToken()
+  async function handleLogout() {
+    await callLogout(process.env.NEXT_PUBLIC_API_URL ?? '')
     router.push('/login')
   }
 
@@ -100,7 +96,7 @@ export function HomePage() {
           <div className="flex items-center gap-2">
             <Link
               href="/profile"
-              aria-label={`Профиль: ${profile?.name ?? email}`}
+              aria-label={`Профиль: ${profile?.name ?? profile?.email}`}
               className="flex items-center gap-2 no-underline rounded-xl px-3 py-2 min-h-[44px] transition-colors hover:bg-[color-mix(in_oklch,var(--foreground)_6%,transparent)]"
               style={{ color: 'var(--foreground)' }}
             >
@@ -139,7 +135,7 @@ export function HomePage() {
                 )}
               </div>
               <span className="text-xs max-w-[120px] truncate" style={{ color: 'var(--muted)' }}>
-                {profile?.name ?? email}
+                {profile?.name ?? profile?.email}
               </span>
             </Link>
             <Button variant="outline" size="sm" onPress={handleLogout}>

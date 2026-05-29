@@ -13,11 +13,10 @@ interface FileRowProps {
   file: MeetingFile
   meetingId: string
   isOwner: boolean
-  token: string
   onDelete: (id: string) => void
 }
 
-export function FileRow({ file, meetingId, isOwner, token, onDelete }: FileRowProps) {
+export function FileRow({ file, meetingId, isOwner, onDelete }: FileRowProps) {
   const [deleting, setDeleting] = useState(false)
   const [downloadError, setDownloadError] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -26,7 +25,7 @@ export function FileRow({ file, meetingId, isOwner, token, onDelete }: FileRowPr
     setDownloadError(null)
     try {
       const res = await fetch(`${API}/meetings/${meetingId}/files/${file.id}/download`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
       })
       if (!res.ok) throw new Error()
 
@@ -50,7 +49,7 @@ export function FileRow({ file, meetingId, isOwner, token, onDelete }: FileRowPr
     try {
       const res = await fetch(`${API}/meetings/${meetingId}/files/${file.id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
       })
       if (res.ok || res.status === 204) {
         onDelete(file.id)

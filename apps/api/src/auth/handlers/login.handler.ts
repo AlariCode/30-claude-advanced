@@ -18,11 +18,13 @@ export class LoginHandler implements ICommandHandler<LoginCommand> {
       new FindUserByEmailQuery(command.email),
     )
 
+    // Always run bcrypt to prevent email enumeration via timing difference
+    const DUMMY_HASH = '$2b$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345'
+    const passwordMatch = await bcrypt.compare(command.password, user?.password ?? DUMMY_HASH)
+
     if (!user) {
       throw new UnauthorizedException('Invalid credentials')
     }
-
-    const passwordMatch = await bcrypt.compare(command.password, user.password)
     if (!passwordMatch) {
       throw new UnauthorizedException('Invalid credentials')
     }

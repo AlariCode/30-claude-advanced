@@ -42,5 +42,8 @@
     "lint-staged": "^16.4.0",
     "prettier": "^3.0.0",
     "typescript": "^5.5.0"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2"
   }
 }

@@ -11,7 +11,11 @@ import { RegisterHandler } from './handlers/register.handler'
     CqrsModule,
     JwtModule.register({
       global: true,
-      secret: process.env['JWT_SECRET'] ?? 'fallback-secret',
+      secret: (() => {
+        const secret = process.env['JWT_SECRET']
+        if (!secret) throw new Error('JWT_SECRET environment variable is required')
+        return secret
+      })(),
       signOptions: { expiresIn: '7d' },
     }),
     UsersModule,

@@ -2,6 +2,37 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Обязательно для каждого метода сервиса
+
+- Все параметры имеют явный TypeScript тип
+- Возвращаемый тип указан явно через Promise<T>
+- Нет console.log — используй Logger из @nestjs/common
+- Переменные называй по смыслу — не x, не data, не result
+
+## Перед написанием нового кода
+
+- Прочитай CLAUDE.md правила, он имеет больший приоритет над существующим кодом
+- Посмотри на соседние файлы которые написаны правильно
+
+## Именование
+
+- Файлы: feature.type.ts (meetings.service.ts)
+- Методы описывают действие: createMeetingWithFiles
+- Переменные по смыслу: meetingId не id, x, data
+- Enum вместо строк: MeetingStatus.PENDING не 'pnd'
+- Константы вместо magic numbers: MAX_FILE_SIZE_MB
+
+## Размер
+
+- Файл > 250 строк → декомпозируй перед добавлением кода
+- Метод > 40 строк → выдели в приватный метод
+- Вложенность > 3 уровней → рефакторить
+
+## Рефакторинг
+
+- Перед добавлением кода в большой файл — декомпозируй
+- Тесты зелёные на каждом шаге рефакторинга
+
 ## Structure
 
 npm workspaces monorepo with two apps and a shared packages directory:

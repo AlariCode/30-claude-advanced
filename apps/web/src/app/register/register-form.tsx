@@ -15,7 +15,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { EyeIcon, WarningIcon } from '@/components/icons'
-import { saveToken } from '@/lib/auth'
+import { markLoggedIn } from '@/lib/auth'
 
 export function RegisterForm() {
   const router = useRouter()
@@ -37,6 +37,7 @@ export function RegisterForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
+        credentials: 'include',
       })
 
       if (!res.ok) {
@@ -48,8 +49,7 @@ export function RegisterForm() {
         return
       }
 
-      const data = await res.json()
-      saveToken(data.token)
+      markLoggedIn()
       router.push('/')
     } catch {
       setServerError('Не удалось подключиться к серверу. Попробуйте ещё раз.')

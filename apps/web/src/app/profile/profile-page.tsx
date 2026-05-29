@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { formatDate } from '@/lib/format'
 import type { UserProfile } from '@/lib/types'
-import { clearToken, getToken } from '@/lib/auth'
+import { callLogout, isLoggedIn } from '@/lib/auth'
 
 function UserAvatarIcon() {
   return (
@@ -66,20 +66,20 @@ export function ProfilePage() {
   const [fetchError, setFetchError] = useState<string | null>(null)
 
   useEffect(() => {
-    const controller = new AbortController()
-    const token = getToken()
-    if (!token) {
+    if (!isLoggedIn()) {
       router.replace('/login')
       return
     }
 
+    const controller = new AbortController()
+
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
       signal: controller.signal,
     })
       .then(async (res) => {
         if (res.status === 401) {
-          clearToken()
+          await callLogout(process.env.NEXT_PUBLIC_API_URL ?? '')
           router.replace('/login')
           return
         }

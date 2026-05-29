@@ -26,11 +26,10 @@ const MAX_FILE_SIZE = 100 * 1024 * 1024
 
 interface FileUploadZoneProps {
   meetingId: string
-  token: string
   onUploaded: (file: MeetingFile) => void
 }
 
-export function FileUploadZone({ meetingId, token, onUploaded }: FileUploadZoneProps) {
+export function FileUploadZone({ meetingId, onUploaded }: FileUploadZoneProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const [progress, setProgress] = useState<number | null>(null)
@@ -74,7 +73,7 @@ export function FileUploadZone({ meetingId, token, onUploaded }: FileUploadZoneP
     const xhr = new XMLHttpRequest()
     xhrRef.current = xhr
     xhr.open('POST', `${API}/meetings/${meetingId}/files`)
-    xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+    xhr.withCredentials = true
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) {

@@ -8,13 +8,9 @@ export class JwtGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<FastifyRequest>()
-    const authHeader = request.headers['authorization']
 
-    if (!authHeader?.startsWith('Bearer ')) {
-      throw new UnauthorizedException()
-    }
-
-    const token = authHeader.slice(7)
+    const token = this.extractToken(request)
+    if (!token) throw new UnauthorizedException()
 
     try {
       const payload = this.jwt.verify<{ sub: string; email: string }>(token)
@@ -26,5 +22,16 @@ export class JwtGuard implements CanActivate {
     } catch {
       throw new UnauthorizedException()
     }
+  }
+
+  private extractToken(request: FastifyRequest): string | undefined {
+    const authHeader = request.headers['authorization']
+    if (authHeader?.startsWith('Bearer ')) {
+      return authHeader.slice(7)
+    }
+
+    const cookies = (request as FastifyRequest & { cookies?: Record<string, string | undefined> })
+      .cookies
+    return cookies?.['vm_token']
   }
 }
