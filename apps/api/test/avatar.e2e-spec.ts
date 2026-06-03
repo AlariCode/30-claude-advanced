@@ -28,6 +28,7 @@ describe('Avatar Upload (e2e)', () => {
     app = moduleFixture.createNestApplication<NestFastifyApplication>(new FastifyAdapter())
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }))
     await app.init()
+    await app.register(import('@fastify/cookie'))
     // 512-byte limit позволяет тестировать превышение размера с маленькими буферами
     await app.register(import('@fastify/multipart'), {
       limits: { fileSize: 512, files: 1 },

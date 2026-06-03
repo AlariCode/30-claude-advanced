@@ -30,13 +30,24 @@ model Meeting {
   files        MeetingFile[]
 }
 
+enum TranscriptionStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+  FAILED
+  SKIPPED
+}
+
 model MeetingFile {
-  id           String   @id @default(cuid())
-  meetingId    String
-  meeting      Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-  originalName String
-  mimeType     String
-  size         Int
-  filePath     String
-  uploadedAt   DateTime @default(now())
+  id                  String              @id @default(cuid())
+  meetingId           String
+  meeting             Meeting             @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  originalName        String
+  mimeType            String
+  size                Int
+  filePath            String
+  uploadedAt          DateTime            @default(now())
+  transcriptionStatus TranscriptionStatus @default(SKIPPED)
+  transcript          String?
+  transcriptionError  String?
 }

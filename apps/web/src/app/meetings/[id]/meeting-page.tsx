@@ -85,6 +85,15 @@ export function MeetingPage() {
     return () => controller.abort()
   }, [meetingId, router, loadFiles])
 
+  useEffect(() => {
+    const hasActiveTranscription = files.some(
+      (f) => f.transcriptionStatus === 'PENDING' || f.transcriptionStatus === 'IN_PROGRESS',
+    )
+    if (!hasActiveTranscription) return
+    const intervalId = setInterval(loadFiles, 3000)
+    return () => clearInterval(intervalId)
+  }, [files, loadFiles])
+
   async function handleLogout() {
     await callLogout(API ?? '')
     router.push('/login')

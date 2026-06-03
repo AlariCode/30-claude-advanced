@@ -5,7 +5,9 @@ import { pipeline } from 'stream/promises'
 import { Readable } from 'stream'
 import { BadRequestException, NotFoundException } from '@nestjs/common'
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
+import { TranscriptionStatus } from '../../../generated/prisma/client'
 import { PrismaService } from '../../prisma/prisma.service'
+import { TranscriptionService } from '../transcription.service'
 import { UploadFileCommand } from '../commands/upload-file.command'
 
 const FILE_SELECT = {
@@ -15,11 +17,19 @@ const FILE_SELECT = {
   mimeType: true,
   size: true,
   uploadedAt: true,
+  transcriptionStatus: true,
+  transcript: true,
+  transcriptionError: true,
 }
+
+const TRANSCRIBABLE_MIME_TYPES = ['audio/mpeg', 'video/mp4']
 
 @CommandHandler(UploadFileCommand)
 export class UploadFileHandler implements ICommandHandler<UploadFileCommand> {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly transcriptionService: TranscriptionService,
+  ) {}
 
   async execute(command: UploadFileCommand) {
     const { meetingId, userId, originalName, mimeType, fileStream } = command
@@ -56,14 +66,34 @@ export class UploadFileHandler implements ICommandHandler<UploadFileCommand> {
 
     const stat = await fs.promises.stat(filePath)
 
+    const isTranscribable = TRANSCRIBABLE_MIME_TYPES.includes(mimeType)
+
+    let createdFile
     try {
-      return await this.prisma.meetingFile.create({
-        data: { meetingId, originalName: safeName, mimeType, size: stat.size, filePath },
+      createdFile = await this.prisma.meetingFile.create({
+        data: {
+          meetingId,
+          originalName: safeName,
+          mimeType,
+          size: stat.size,
+          filePath,
+          transcriptionStatus: isTranscribable
+            ? TranscriptionStatus.PENDING
+            : TranscriptionStatus.SKIPPED,
+        },
         select: FILE_SELECT,
       })
     } catch (err) {
       await fs.promises.unlink(filePath).catch(() => null)
       throw err
     }
+
+    if (isTranscribable) {
+      setImmediate(() => {
+        this.transcriptionService.transcribeFile(createdFile.id, filePath).catch(() => null)
+      })
+    }
+
+    return createdFile
   }
 }

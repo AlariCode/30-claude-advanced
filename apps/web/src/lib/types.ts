@@ -13,6 +13,9 @@ export interface MeetingFile {
   mimeType: string
   size: number
   uploadedAt: string
+  transcriptionStatus: 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'FAILED' | 'SKIPPED'
+  transcript: string | null
+  transcriptionError: string | null
 }
 
 export interface UserProfile {

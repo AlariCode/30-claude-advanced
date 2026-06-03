@@ -31,6 +31,7 @@ describe('MeetingFiles (e2e)', () => {
     app = moduleFixture.createNestApplication<NestFastifyApplication>(new FastifyAdapter())
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }))
     await app.init()
+    await app.register(import('@fastify/cookie'))
     // 512-byte limit lets us trigger size errors with small buffers
     await app.register(import('@fastify/multipart'), {
       limits: { fileSize: 512, files: 1 },
@@ -471,6 +472,36 @@ describe('MeetingFiles (e2e)', () => {
       const record = await prisma.meetingFile.findUnique({ where: { id: res.body.id } })
       expect(record).not.toBeNull()
       expect(fs.existsSync(record!.filePath)).toBe(true)
+    })
+  })
+
+  // ─── Transcription status ─────────────────────────────────────────────────
+
+  describe('Transcription status', () => {
+    it('upload mp3 returns transcriptionStatus PENDING', async () => {
+      const res = await request(app.getHttpServer())
+        .post(`/meetings/${meetingId}/files`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .attach('file', Buffer.from('audio data'), {
+          filename: 'test.mp3',
+          contentType: 'audio/mpeg',
+        })
+        .expect(201)
+
+      expect(res.body).toMatchObject({ transcriptionStatus: 'PENDING' })
+    })
+
+    it('upload pdf returns transcriptionStatus SKIPPED', async () => {
+      const res = await request(app.getHttpServer())
+        .post(`/meetings/${meetingId}/files`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .attach('file', Buffer.from('pdf data'), {
+          filename: 'test.pdf',
+          contentType: 'application/pdf',
+        })
+        .expect(201)
+
+      expect(res.body).toMatchObject({ transcriptionStatus: 'SKIPPED' })
     })
   })
 

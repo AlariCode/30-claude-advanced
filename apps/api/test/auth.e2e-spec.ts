@@ -17,6 +17,7 @@ describe('Auth (e2e)', () => {
     app = moduleFixture.createNestApplication<NestFastifyApplication>(new FastifyAdapter())
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }))
     await app.init()
+    await app.register(import('@fastify/cookie'))
     await app.getHttpAdapter().getInstance().ready()
 
     prisma = app.get(PrismaService)

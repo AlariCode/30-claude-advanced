@@ -15,6 +15,18 @@ export class GetFileHandler implements IQueryHandler<GetFileQuery> {
         meetingId: query.meetingId,
         meeting: { ownerId: query.userId },
       },
+      select: {
+        id: true,
+        meetingId: true,
+        originalName: true,
+        mimeType: true,
+        size: true,
+        uploadedAt: true,
+        transcriptionStatus: true,
+        transcript: true,
+        transcriptionError: true,
+        filePath: true,
+      },
     })
 
     if (!file) throw new NotFoundException('File not found')

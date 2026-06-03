@@ -85,6 +85,33 @@ export function FileRow({ file, meetingId, isOwner, onDelete }: FileRowProps) {
           <p className="text-xs" style={{ color: 'var(--muted)' }}>
             {formatSize(file.size)} · {formatDateTime(file.uploadedAt)}
           </p>
+          {(file.mimeType === 'audio/mpeg' || file.mimeType === 'video/mp4') && (
+            <div className="flex items-center gap-1.5 mt-1">
+              {file.transcriptionStatus === 'PENDING' && (
+                <span className="text-xs" style={{ color: 'var(--muted)' }}>
+                  Ожидает транскрибации
+                </span>
+              )}
+              {file.transcriptionStatus === 'IN_PROGRESS' && (
+                <>
+                  <Spinner size="sm" />
+                  <span className="text-xs" style={{ color: 'var(--muted)' }}>
+                    Транскрибация...
+                  </span>
+                </>
+              )}
+              {file.transcriptionStatus === 'DONE' && (
+                <span className="text-xs" style={{ color: 'var(--success, #22c55e)' }}>
+                  ✓ Транскрибировано
+                </span>
+              )}
+              {file.transcriptionStatus === 'FAILED' && (
+                <span className="text-xs" style={{ color: 'var(--danger)' }}>
+                  Ошибка транскрибации
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <Button
@@ -135,6 +162,19 @@ export function FileRow({ file, meetingId, isOwner, onDelete }: FileRowProps) {
           )}
         </div>
       </div>
+      {file.transcriptionStatus === 'DONE' && file.transcript && (
+        <details className="px-4">
+          <summary
+            className="text-xs cursor-pointer select-none"
+            style={{ color: 'var(--accent)' }}
+          >
+            Показать транскрипцию
+          </summary>
+          <p className="text-xs mt-2 whitespace-pre-wrap" style={{ color: 'var(--muted)' }}>
+            {file.transcript}
+          </p>
+        </details>
+      )}
       {downloadError && (
         <p className="text-xs px-4" style={{ color: 'var(--danger)' }}>
           {downloadError}

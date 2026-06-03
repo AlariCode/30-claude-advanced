@@ -10,6 +10,9 @@ const FILE_SELECT = {
   mimeType: true,
   size: true,
   uploadedAt: true,
+  transcriptionStatus: true,
+  transcript: true,
+  transcriptionError: true,
 }
 
 @QueryHandler(GetMeetingFilesQuery)
