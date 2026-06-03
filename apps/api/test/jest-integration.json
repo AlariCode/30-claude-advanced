@@ -1,0 +1,24 @@
+{
+  "extensionsToTreatAsEsm": [".ts"],
+  "moduleFileExtensions": ["js", "mjs", "cjs", "json", "ts"],
+  "rootDir": "..",
+  "testRegex": "src/claude-agent/.*\\.spec\\.ts$",
+  "transform": {
+    "^.+\\.ts$": [
+      "ts-jest",
+      {
+        "useESM": true,
+        "tsconfig": {
+          "esModuleInterop": true,
+          "module": "ESNext",
+          "moduleResolution": "Bundler",
+          "experimentalDecorators": true,
+          "emitDecoratorMetadata": true,
+          "strict": true
+        }
+      }
+    ]
+  },
+  "testEnvironment": "node",
+  "setupFiles": ["dotenv/config"]
+}

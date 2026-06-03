@@ -17,5 +17,6 @@
       }
     ]
   },
-  "testEnvironment": "node"
+  "testEnvironment": "node",
+  "testPathIgnorePatterns": ["claude-agent\\.service\\.spec\\.ts"]
 }
