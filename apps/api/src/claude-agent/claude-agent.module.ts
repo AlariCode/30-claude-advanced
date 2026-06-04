@@ -8,7 +8,7 @@ import { ClaudeAgentService } from './claude-agent.service'
       useFactory: () =>
         new ClaudeAgentService({
           baseUrl: process.env.ANTHROPIC_BASE_URL ?? '',
-          authToken: process.env.ANTHROPIC_AUTH_TOKEN ?? '',
+          authToken: process.env.ANTHROPIC_API_KEY ?? '',
         }),
     },
   ],

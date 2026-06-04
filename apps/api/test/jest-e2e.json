@@ -1,5 +1,5 @@
 {
-  "moduleFileExtensions": ["js", "json", "ts"],
+  "moduleFileExtensions": ["js", "mjs", "cjs", "json", "ts"],
   "rootDir": ".",
   "testRegex": ".e2e-spec.ts$",
   "transform": {
@@ -15,11 +15,23 @@
           "strict": true
         }
       }
+    ],
+    "^.+\\.mjs$": [
+      "ts-jest",
+      {
+        "tsconfig": {
+          "esModuleInterop": true,
+          "module": "CommonJS",
+          "moduleResolution": "Node"
+        }
+      }
     ]
   },
+  "transformIgnorePatterns": ["/node_modules/(?!@anthropic-ai/claude-agent-sdk)"],
   "testEnvironment": "node",
   "setupFiles": ["dotenv/config"],
   "moduleNameMapper": {
+    "^@anthropic-ai/claude-agent-sdk$": "<rootDir>/__mocks__/claude-agent-sdk.js",
     "^@/(.*)$": "<rootDir>/../src/$1"
   }
 }

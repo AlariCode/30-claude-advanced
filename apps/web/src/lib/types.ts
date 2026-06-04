@@ -25,3 +25,22 @@ export interface UserProfile {
   avatarUrl: string | null
   createdAt: string
 }
+
+export interface ActionItem {
+  task: string
+  assignee: string | null
+}
+
+export type SummaryStatus = 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'FAILED'
+
+export interface MeetingSummary {
+  id: string
+  meetingId: string
+  summary: string | null
+  actionItems: ActionItem[] | null
+  decisions: string[] | null
+  status: SummaryStatus
+  error: string | null
+  createdAt: string
+  updatedAt: string
+}

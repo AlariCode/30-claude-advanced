@@ -11,6 +11,7 @@ import type { Meeting, MeetingFile } from '@/lib/types'
 import { callLogout, isLoggedIn } from '@/lib/auth'
 import { FileRow } from './file-row'
 import { FileUploadZone } from './file-upload-zone'
+import { MeetingSummarySection } from './meeting-summary'
 
 const API = process.env.NEXT_PUBLIC_API_URL
 
@@ -108,6 +109,7 @@ export function MeetingPage() {
   }
 
   const isOwner = !!currentUserId && !!meeting && meeting.ownerId === currentUserId
+  const hasDoneTranscription = files.some((f) => f.transcriptionStatus === 'DONE')
 
   if (isLoadingMeeting) {
     return (
@@ -244,6 +246,12 @@ export function MeetingPage() {
             )}
           </Card.Content>
         </Card>
+
+        <MeetingSummarySection
+          meetingId={meetingId}
+          isOwner={isOwner}
+          hasDoneTranscription={hasDoneTranscription}
+        />
       </div>
     </div>
   )

@@ -19,15 +19,16 @@ model User {
 }
 
 model Meeting {
-  id           String        @id @default(cuid())
+  id           String         @id @default(cuid())
   title        String
   date         DateTime
   participants String[]
   ownerId      String
-  owner        User          @relation(fields: [ownerId], references: [id])
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  owner        User           @relation(fields: [ownerId], references: [id])
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
   files        MeetingFile[]
+  summary      MeetingSummary? @relation("MeetingSummary")
 }
 
 enum TranscriptionStatus {
@@ -36,6 +37,13 @@ enum TranscriptionStatus {
   DONE
   FAILED
   SKIPPED
+}
+
+enum SummaryStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+  FAILED
 }
 
 model MeetingFile {
@@ -50,4 +58,19 @@ model MeetingFile {
   transcriptionStatus TranscriptionStatus @default(SKIPPED)
   transcript          String?
   transcriptionError  String?
+}
+
+model MeetingSummary {
+  id          String        @id @default(uuid())
+  meetingId   String        @unique
+  meeting     Meeting       @relation("MeetingSummary", fields: [meetingId], references: [id], onDelete: Cascade)
+  summary     String?
+  actionItems Json?
+  decisions   Json?
+  status      SummaryStatus @default(PENDING)
+  error       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([meetingId])
 }
