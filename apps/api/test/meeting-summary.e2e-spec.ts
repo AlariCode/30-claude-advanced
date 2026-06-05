@@ -7,11 +7,11 @@ import { AppModule } from '../src/app.module'
 import { PrismaService } from '../src/prisma/prisma.service'
 import { TranscriptionStatus } from '../generated/prisma/client'
 
-const VALID_CLAUDE_RESPONSE = JSON.stringify({
+const VALID_CLAUDE_RESPONSE = {
   summary: 'Test meeting summary',
   actionItems: [{ task: 'Follow up', assignee: 'Alice' }],
   decisions: ['Use TypeScript', 'Weekly syncs'],
-})
+}
 
 describe('MeetingSummary (e2e)', () => {
   let app: NestFastifyApplication
@@ -98,7 +98,9 @@ describe('MeetingSummary (e2e)', () => {
 
   describe('POST /meetings/:id/summary', () => {
     it('202: запускает генерацию для встречи с DONE файлами', async () => {
-      jest.spyOn(app.get(ClaudeAgentService), 'ask').mockResolvedValueOnce(VALID_CLAUDE_RESPONSE)
+      jest
+        .spyOn(app.get(ClaudeAgentService), 'askStructured')
+        .mockResolvedValueOnce(VALID_CLAUDE_RESPONSE)
 
       const res = await request(app.getHttpServer())
         .post(`/meetings/${meetingId}/summary`)
@@ -152,13 +154,13 @@ describe('MeetingSummary (e2e)', () => {
 
   describe('POST /meetings/:id/summary — повторная генерация', () => {
     it('202: повторный вызов перезаписывает предыдущий результат', async () => {
-      const newResponse = JSON.stringify({
+      const newResponse = {
         summary: 'Updated summary',
         actionItems: [],
         decisions: ['New decision'],
-      })
+      }
 
-      jest.spyOn(app.get(ClaudeAgentService), 'ask').mockResolvedValueOnce(newResponse)
+      jest.spyOn(app.get(ClaudeAgentService), 'askStructured').mockResolvedValueOnce(newResponse)
 
       await request(app.getHttpServer())
         .post(`/meetings/${meetingId}/summary`)

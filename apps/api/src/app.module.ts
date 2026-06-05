@@ -4,6 +4,7 @@ import { MeetingFileModule } from './meeting-file/meeting-file.module'
 import { MeetingModule } from './meeting/meeting.module'
 import { MeetingSummaryModule } from './meeting-summary/meeting-summary.module'
 import { PrismaModule } from './prisma/prisma.module'
+import { TaskModule } from './task/task.module'
 import { UsersModule } from './users/users.module'
 
 @Module({
@@ -14,6 +15,7 @@ import { UsersModule } from './users/users.module'
     MeetingModule,
     MeetingFileModule,
     MeetingSummaryModule,
+    TaskModule,
   ],
 })
 export class AppModule {}

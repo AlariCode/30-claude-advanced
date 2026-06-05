@@ -24,6 +24,7 @@ describe('Users (e2e)', () => {
     await app.getHttpAdapter().getInstance().ready()
 
     prisma = app.get(PrismaService)
+    await prisma.$executeRawUnsafe(`DELETE FROM "Meeting" WHERE TRUE`).catch(() => null)
     await prisma.user.deleteMany()
 
     const res = await request(app.getHttpServer())
@@ -35,6 +36,7 @@ describe('Users (e2e)', () => {
   })
 
   afterAll(async () => {
+    await prisma.$executeRawUnsafe(`DELETE FROM "Meeting" WHERE TRUE`).catch(() => null)
     await prisma.user.deleteMany()
     await app.close()
   })

@@ -29,6 +29,7 @@ model Meeting {
   updatedAt    DateTime       @updatedAt
   files        MeetingFile[]
   summary      MeetingSummary? @relation("MeetingSummary")
+  tasks        Task[]          @relation("MeetingTasks")
 }
 
 enum TranscriptionStatus {
@@ -73,4 +74,22 @@ model MeetingSummary {
   updatedAt   DateTime      @updatedAt
 
   @@index([meetingId])
+}
+
+enum TaskStatus {
+  OPEN
+  DONE
+}
+
+model Task {
+  id              String    @id @default(uuid())
+  title           String
+  sourceMeetingId String
+  sourceMeeting   Meeting   @relation("MeetingTasks", fields: [sourceMeetingId], references: [id], onDelete: Cascade)
+  status          TaskStatus @default(OPEN)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([sourceMeetingId, title])
+  @@index([sourceMeetingId])
 }
