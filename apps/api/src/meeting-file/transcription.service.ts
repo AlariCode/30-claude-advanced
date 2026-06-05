@@ -1,16 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common'
+import { CommandBus } from '@nestjs/cqrs'
 import { spawn } from 'child_process'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 
 import { TranscriptionStatus } from '../../generated/prisma/client'
+import { GenerateSummaryCommand } from '../meeting-summary/commands/generate-summary.command'
 import { PrismaService } from '../prisma/prisma.service'
 
 @Injectable()
 export class TranscriptionService {
   private readonly logger = new Logger(TranscriptionService.name)
 
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly commandBus: CommandBus,
+  ) {}
 
   async transcribeFile(fileId: string, filePath: string): Promise<void> {
     await this.prismaService.meetingFile.update({
@@ -35,6 +40,8 @@ export class TranscriptionService {
       })
 
       this.logger.log(`Transcription completed for file ${fileId}`)
+
+      await this.triggerSummaryGeneration(fileId)
     } catch (transcriptionError) {
       const errorMessage =
         transcriptionError instanceof Error
@@ -50,6 +57,30 @@ export class TranscriptionService {
           transcriptionError: errorMessage,
         },
       })
+    }
+  }
+
+  private async triggerSummaryGeneration(fileId: string): Promise<void> {
+    try {
+      const meetingFile = await this.prismaService.meetingFile.findUnique({
+        where: { id: fileId },
+        select: { meetingId: true, meeting: { select: { ownerId: true } } },
+      })
+
+      if (!meetingFile) {
+        this.logger.warn(`Cannot trigger summary: file ${fileId} not found`)
+        return
+      }
+
+      await this.commandBus.execute(
+        new GenerateSummaryCommand(meetingFile.meetingId, meetingFile.meeting.ownerId),
+      )
+    } catch (summaryError) {
+      const errorMessage =
+        summaryError instanceof Error ? summaryError.message : String(summaryError)
+      this.logger.error(
+        `Failed to trigger summary generation after transcription of file ${fileId}: ${errorMessage}`,
+      )
     }
   }
 

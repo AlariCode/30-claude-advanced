@@ -86,14 +86,15 @@ export function MeetingPage() {
     return () => controller.abort()
   }, [meetingId, router, loadFiles])
 
+  const hasActiveTranscription = files.some(
+    (f) => f.transcriptionStatus === 'PENDING' || f.transcriptionStatus === 'IN_PROGRESS',
+  )
+
   useEffect(() => {
-    const hasActiveTranscription = files.some(
-      (f) => f.transcriptionStatus === 'PENDING' || f.transcriptionStatus === 'IN_PROGRESS',
-    )
     if (!hasActiveTranscription) return
     const intervalId = setInterval(loadFiles, 3000)
     return () => clearInterval(intervalId)
-  }, [files, loadFiles])
+  }, [hasActiveTranscription, loadFiles])
 
   async function handleLogout() {
     await callLogout(API ?? '')
@@ -109,7 +110,6 @@ export function MeetingPage() {
   }
 
   const isOwner = !!currentUserId && !!meeting && meeting.ownerId === currentUserId
-  const hasDoneTranscription = files.some((f) => f.transcriptionStatus === 'DONE')
 
   if (isLoadingMeeting) {
     return (
@@ -249,8 +249,7 @@ export function MeetingPage() {
 
         <MeetingSummarySection
           meetingId={meetingId}
-          isOwner={isOwner}
-          hasDoneTranscription={hasDoneTranscription}
+          hasActiveTranscription={hasActiveTranscription}
         />
       </div>
     </div>

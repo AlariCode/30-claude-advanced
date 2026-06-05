@@ -8,19 +8,17 @@ const API = process.env.NEXT_PUBLIC_API_URL
 
 interface MeetingSummarySectionProps {
   meetingId: string
-  isOwner: boolean
-  hasDoneTranscription: boolean
+  hasActiveTranscription: boolean
 }
 
 export function MeetingSummarySection({
   meetingId,
-  isOwner,
-  hasDoneTranscription,
+  hasActiveTranscription,
 }: MeetingSummarySectionProps) {
   const [summary, setSummary] = useState<MeetingSummary | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isGenerating, setIsGenerating] = useState(false)
+  const [isRetrying, setIsRetrying] = useState(false)
 
   const loadSummary = useCallback(async () => {
     try {
@@ -44,14 +42,17 @@ export function MeetingSummarySection({
   }, [loadSummary])
 
   useEffect(() => {
-    const isActive = summary?.status === 'PENDING' || summary?.status === 'IN_PROGRESS'
-    if (!isActive) return
+    const shouldPoll =
+      summary?.status === 'PENDING' ||
+      summary?.status === 'IN_PROGRESS' ||
+      (summary === null && hasActiveTranscription)
+    if (!shouldPoll) return
     const intervalId = setInterval(loadSummary, 3000)
     return () => clearInterval(intervalId)
-  }, [summary?.status, loadSummary])
+  }, [summary, hasActiveTranscription, loadSummary])
 
-  async function handleGenerate() {
-    setIsGenerating(true)
+  async function handleRetry() {
+    setIsRetrying(true)
     setError(null)
     try {
       const res = await fetch(`${API}/meetings/${meetingId}/summary`, {
@@ -63,38 +64,16 @@ export function MeetingSummarySection({
     } catch {
       setError('Не удалось запустить генерацию выжимки')
     } finally {
-      setIsGenerating(false)
+      setIsRetrying(false)
     }
   }
-
-  const generateButtonLabel =
-    summary === null || summary.status === 'FAILED' ? 'Сгенерировать выжимку' : 'Перегенерировать'
 
   return (
     <Card className="shadow-sm">
       <Card.Header>
-        <div className="flex items-center justify-between w-full">
-          <Card.Title className="text-base">Выжимка встречи</Card.Title>
-          {isOwner && (
-            <div className="flex flex-col items-end gap-1">
-              <Button
-                size="sm"
-                variant="outline"
-                isDisabled={!hasDoneTranscription || isGenerating}
-                onPress={handleGenerate}
-              >
-                {isGenerating ? <Spinner size="sm" /> : generateButtonLabel}
-              </Button>
-              {!hasDoneTranscription && (
-                <span className="text-xs" style={{ color: 'var(--muted)' }}>
-                  Сначала дождитесь завершения транскрипции
-                </span>
-              )}
-            </div>
-          )}
-        </div>
+        <Card.Title className="text-base">Выжимка встречи</Card.Title>
       </Card.Header>
-      <Card.Content className="flex flex-col gap-4">
+      <Card.Content className="flex flex-col gap-4" aria-live="polite">
         {isLoading ? (
           <div className="flex justify-center py-6">
             <Spinner size="md" />
@@ -105,7 +84,9 @@ export function MeetingSummarySection({
           </p>
         ) : summary === null ? (
           <p className="text-sm text-center py-4" style={{ color: 'var(--muted)' }}>
-            Выжимка ещё не сгенерирована
+            {hasActiveTranscription
+              ? 'Выжимка генерируется автоматически после транскрипции'
+              : 'Выжимка ещё не сгенерирована'}
           </p>
         ) : summary.status === 'PENDING' || summary.status === 'IN_PROGRESS' ? (
           <div className="flex items-center justify-center gap-2 py-6">
@@ -115,10 +96,13 @@ export function MeetingSummarySection({
             </span>
           </div>
         ) : summary.status === 'FAILED' ? (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col items-start gap-3">
             <p className="text-sm" style={{ color: 'var(--danger)' }}>
               {summary.error ?? 'Ошибка генерации выжимки'}
             </p>
+            <Button size="sm" variant="outline" isDisabled={isRetrying} onPress={handleRetry}>
+              {isRetrying ? <Spinner size="sm" /> : 'Повторить'}
+            </Button>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
