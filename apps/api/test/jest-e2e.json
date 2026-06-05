@@ -29,7 +29,7 @@
   },
   "transformIgnorePatterns": ["/node_modules/(?!@anthropic-ai/claude-agent-sdk)"],
   "testEnvironment": "node",
-  "setupFiles": ["dotenv/config"],
+  "setupFiles": ["<rootDir>/setup-env.js"],
   "moduleNameMapper": {
     "^@anthropic-ai/claude-agent-sdk$": "<rootDir>/__mocks__/claude-agent-sdk.js",
     "^@/(.*)$": "<rootDir>/../src/$1"
