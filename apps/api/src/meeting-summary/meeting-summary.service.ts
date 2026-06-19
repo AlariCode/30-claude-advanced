@@ -82,14 +82,18 @@ export class MeetingSummaryService {
       error: null,
     })
 
-    void this.processGeneration(meetingId, transcript)
+    void this.processGeneration(meetingId, userId, transcript)
   }
 
-  private async processGeneration(meetingId: string, transcript: string): Promise<void> {
+  private async processGeneration(
+    meetingId: string,
+    ownerId: string,
+    transcript: string,
+  ): Promise<void> {
     try {
       await this.upsertSummaryRecord(meetingId, { status: SummaryStatus.IN_PROGRESS })
 
-      const mcpServer = createMeetingMcpServer(this.taskService, this.prisma, meetingId)
+      const mcpServer = createMeetingMcpServer(this.taskService, this.prisma, meetingId, ownerId)
 
       const GENERATION_TIMEOUT_MS = 3 * 60 * 1_000
 

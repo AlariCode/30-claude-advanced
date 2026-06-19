@@ -1,12 +1,15 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common'
 import { Task, TaskStatus } from '../../generated/prisma/client'
 import { PrismaService } from '../prisma/prisma.service'
 
 export interface UpsertTaskInput {
   title: string
   sourceMeetingId: string
+  ownerId: string
   status?: TaskStatus
 }
+
+export type TaskWithOwner = Task & { sourceMeeting: { ownerId: string } }
 
 @Injectable()
 export class TaskService {
@@ -14,10 +17,11 @@ export class TaskService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async search(query: string, sourceMeetingId: string): Promise<Task[]> {
+  async search(query: string, sourceMeetingId: string, ownerId: string): Promise<Task[]> {
     return this.prisma.task.findMany({
       where: {
         sourceMeetingId,
+        sourceMeeting: { ownerId },
         title: { contains: query, mode: 'insensitive' },
       },
       orderBy: { createdAt: 'desc' },
@@ -25,7 +29,13 @@ export class TaskService {
   }
 
   async upsert(input: UpsertTaskInput): Promise<Task> {
-    const { title, sourceMeetingId, status = TaskStatus.OPEN } = input
+    const { title, sourceMeetingId, ownerId, status = TaskStatus.OPEN } = input
+
+    const meeting = await this.prisma.meeting.findFirst({
+      where: { id: sourceMeetingId, ownerId },
+      select: { id: true },
+    })
+    if (!meeting) throw new ForbiddenException()
 
     const task = await this.prisma.task.upsert({
       where: { sourceMeetingId_title: { sourceMeetingId, title } },
@@ -44,7 +54,10 @@ export class TaskService {
     })
   }
 
-  async get(taskId: string): Promise<Task | null> {
-    return this.prisma.task.findUnique({ where: { id: taskId } })
+  async get(taskId: string): Promise<TaskWithOwner | null> {
+    return this.prisma.task.findUnique({
+      where: { id: taskId },
+      include: { sourceMeeting: { select: { ownerId: true } } },
+    })
   }
 }

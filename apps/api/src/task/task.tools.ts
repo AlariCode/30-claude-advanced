@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { TaskStatus } from '../../generated/prisma/client'
-import { McpToolRegistrar } from '../mcp/mcp-tool-registrar.interface'
+import { McpToolRegistrar, Requester } from '../mcp/mcp-tool-registrar.interface'
 import { z } from 'zod'
 import { TaskService } from './task.service'
 
@@ -9,7 +9,7 @@ import { TaskService } from './task.service'
 export class TaskTools implements McpToolRegistrar {
   constructor(private readonly taskService: TaskService) {}
 
-  register(server: McpServer): void {
+  register(server: McpServer, requester: Requester): void {
     server.registerTool(
       'find_tasks',
       {
@@ -21,7 +21,7 @@ export class TaskTools implements McpToolRegistrar {
         annotations: { readOnlyHint: true },
       },
       async ({ query, meetingId }) => {
-        const tasks = await this.taskService.search(query, meetingId)
+        const tasks = await this.taskService.search(query, meetingId, requester.userId)
         return { content: [{ type: 'text' as const, text: JSON.stringify(tasks) }] }
       },
     )
@@ -42,7 +42,12 @@ export class TaskTools implements McpToolRegistrar {
         annotations: { readOnlyHint: false },
       },
       async ({ title, status, meetingId }) => {
-        const task = await this.taskService.upsert({ title, sourceMeetingId: meetingId, status })
+        const task = await this.taskService.upsert({
+          title,
+          sourceMeetingId: meetingId,
+          ownerId: requester.userId,
+          status,
+        })
         return { content: [{ type: 'text' as const, text: JSON.stringify(task) }] }
       },
     )
@@ -52,8 +57,7 @@ export class TaskTools implements McpToolRegistrar {
       'tasks://open',
       { mimeType: 'application/json' },
       async (_uri, _extra) => {
-        // ownerId will come from request auth — wired in the next lesson
-        const tasks = await this.taskService.open('')
+        const tasks = await this.taskService.open(requester.userId)
         return {
           contents: [
             { uri: 'tasks://open', mimeType: 'application/json', text: JSON.stringify(tasks) },
@@ -69,6 +73,7 @@ export class TaskTools implements McpToolRegistrar {
       async (uri, { taskId }, _extra) => {
         const task = await this.taskService.get(taskId as string)
         if (!task) throw new Error(`Task ${taskId} not found`)
+        if (task.sourceMeeting.ownerId !== requester.userId) throw new Error('Forbidden')
         return {
           contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(task) }],
         }

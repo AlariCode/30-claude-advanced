@@ -9,21 +9,21 @@ const logger = new Logger('MeetingTools')
 
 const textContent = (text: string) => ({ content: [{ type: 'text' as const, text }] })
 
-const findTasksTool = (taskService: TaskService, meetingId: string) =>
+const findTasksTool = (taskService: TaskService, meetingId: string, ownerId: string) =>
   tool(
     'find_tasks',
     'Search tasks by text similarity within the current meeting. Read-only.',
     { query: z.string().describe('Search string to match against task titles') },
     async ({ query }) => {
       logger.log(`find_tasks called — meetingId=${meetingId} query="${query}"`)
-      const tasks = await taskService.search(query, meetingId)
+      const tasks = await taskService.search(query, meetingId, ownerId)
       logger.log(`find_tasks result — ${tasks.length} task(s) found`)
       return textContent(JSON.stringify(tasks))
     },
     { annotations: { readOnlyHint: true } },
   )
 
-const upsertTaskTool = (taskService: TaskService, meetingId: string) =>
+const upsertTaskTool = (taskService: TaskService, meetingId: string, ownerId: string) =>
   tool(
     'upsert_task',
     'Create or update a task within the current meeting.',
@@ -38,6 +38,7 @@ const upsertTaskTool = (taskService: TaskService, meetingId: string) =>
       const task = await taskService.upsert({
         title,
         sourceMeetingId: meetingId,
+        ownerId,
         status: status as TaskStatus | undefined,
       })
       logger.log(`upsert_task result — id=${task.id} status=${task.status}`)
@@ -83,12 +84,13 @@ export function createMeetingMcpServer(
   taskService: TaskService,
   prisma: PrismaService,
   meetingId: string,
+  ownerId: string,
 ) {
   return createSdkMcpServer({
     name: 'meeting',
     tools: [
-      findTasksTool(taskService, meetingId),
-      upsertTaskTool(taskService, meetingId),
+      findTasksTool(taskService, meetingId, ownerId),
+      upsertTaskTool(taskService, meetingId, ownerId),
       updateMeetingTool(prisma, meetingId),
     ],
   })

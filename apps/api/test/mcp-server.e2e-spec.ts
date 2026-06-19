@@ -1,6 +1,7 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { ValidationPipe } from '@nestjs/common'
+import { JwtService } from '@nestjs/jwt'
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify'
 import { Test } from '@nestjs/testing'
 import { AppModule } from '../src/app.module'
@@ -52,7 +53,12 @@ describe('MCP HTTP endpoint (e2e)', () => {
     })
     taskId = tasks[0].id
 
-    const transport = new StreamableHTTPClientTransport(new URL(`${appUrl}/mcp`))
+    const jwtService = app.get(JwtService)
+    const token = jwtService.sign({ sub: owner.id, email: owner.email })
+
+    const transport = new StreamableHTTPClientTransport(new URL(`${appUrl}/mcp`), {
+      requestInit: { headers: { Authorization: `Bearer ${token}` } },
+    })
     client = new Client({ name: 'test-client', version: '1.0.0' })
     await client.connect(transport)
   })

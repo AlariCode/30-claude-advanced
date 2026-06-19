@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { TaskStatus } from '../../generated/prisma/client'
-import { McpToolRegistrar } from '../mcp/mcp-tool-registrar.interface'
+import { McpToolRegistrar, Requester } from '../mcp/mcp-tool-registrar.interface'
 import { PrismaService } from '../prisma/prisma.service'
 import { z } from 'zod'
 
@@ -9,7 +9,7 @@ import { z } from 'zod'
 export class MeetingPrompts implements McpToolRegistrar {
   constructor(private readonly prisma: PrismaService) {}
 
-  register(server: McpServer): void {
+  register(server: McpServer, _requester: Requester): void {
     server.registerPrompt(
       'meeting_brief',
       {
