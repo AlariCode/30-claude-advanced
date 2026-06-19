@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { AuthModule } from './auth/auth.module'
+import { McpModule } from './mcp/mcp.module'
 import { MeetingFileModule } from './meeting-file/meeting-file.module'
 import { MeetingModule } from './meeting/meeting.module'
 import { MeetingSummaryModule } from './meeting-summary/meeting-summary.module'
@@ -16,6 +17,7 @@ import { UsersModule } from './users/users.module'
     MeetingFileModule,
     MeetingSummaryModule,
     TaskModule,
+    McpModule,
   ],
 })
 export class AppModule {}

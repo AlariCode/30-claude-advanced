@@ -5,12 +5,20 @@ import { ClaudeAgentModule } from '../claude-agent/claude-agent.module'
 import { TaskModule } from '../task/task.module'
 import { GenerateSummaryHandler } from './handlers/generate-summary.handler'
 import { GetMeetingSummaryHandler } from './handlers/get-meeting-summary.handler'
+import { MeetingPrompts } from './meeting.prompts'
 import { MeetingSummaryController } from './meeting-summary.controller'
 import { MeetingSummaryService } from './meeting-summary.service'
 
 @Module({
   imports: [CqrsModule, ClaudeAgentModule, TaskModule],
   controllers: [MeetingSummaryController],
-  providers: [JwtGuard, MeetingSummaryService, GenerateSummaryHandler, GetMeetingSummaryHandler],
+  providers: [
+    JwtGuard,
+    MeetingSummaryService,
+    GenerateSummaryHandler,
+    GetMeetingSummaryHandler,
+    MeetingPrompts,
+  ],
+  exports: [MeetingPrompts],
 })
 export class MeetingSummaryModule {}

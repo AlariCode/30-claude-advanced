@@ -36,4 +36,15 @@ export class TaskService {
     this.logger.log(`Task upserted: "${title}" for meeting ${sourceMeetingId}`)
     return task
   }
+
+  async open(ownerId: string): Promise<Task[]> {
+    return this.prisma.task.findMany({
+      where: { status: TaskStatus.OPEN, sourceMeeting: { ownerId } },
+      orderBy: { createdAt: 'desc' },
+    })
+  }
+
+  async get(taskId: string): Promise<Task | null> {
+    return this.prisma.task.findUnique({ where: { id: taskId } })
+  }
 }
