@@ -1,27 +1,17 @@
 'use client'
 
-import {
-  Button,
-  Card,
-  Description,
-  FieldError,
-  Form,
-  Input,
-  Label,
-  Spinner,
-  TextField,
-} from '@heroui/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { EyeIcon, WarningIcon } from '@/components/icons'
+import { Video } from 'lucide-react'
+import { AuthField } from '@/components/ui/auth-field'
+import { WarningIcon } from '@/components/icons'
 import { markLoggedIn } from '@/lib/auth'
 
 export function RegisterForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
-  const [showPassword, setShowPassword] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -59,127 +49,101 @@ export function RegisterForm() {
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: 'var(--background)' }}
-    >
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
+    <div className="flex min-h-screen items-center justify-center bg-ground px-5 py-10 sm:p-10">
+      <div className="flex w-full flex-col gap-8 sm:max-w-[520px] sm:gap-9">
+        {/* Brand */}
+        <div className="flex flex-col items-center gap-[18px]">
           <div
-            className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4"
-            style={{ background: 'var(--accent)', color: 'var(--accent-foreground)' }}
+            className="flex h-[76px] w-[76px] items-center justify-center rounded-[20px] bg-accent"
+            style={{ boxShadow: '0 6px 16px #0062FF40' }}
           >
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
-            </svg>
+            <Video size={38} color="white" strokeWidth={1.5} />
           </div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
-            Video Meetings
-          </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>
-            Видеовстречи без границ
-          </p>
+          <div className="flex flex-col items-center gap-[6px]">
+            <span
+              className="text-[34px] font-bold text-text-primary"
+              style={{ fontFamily: 'var(--font-head)' }}
+            >
+              Video Meetings
+            </span>
+            <span className="text-[17px] text-text-secondary">Видеовстречи без границ</span>
+          </div>
         </div>
 
-        <Card className="shadow-lg">
-          <Card.Header className="pt-4">
-            <Card.Title>Создать аккаунт</Card.Title>
-            <Card.Description>Введите email и пароль для регистрации</Card.Description>
-          </Card.Header>
+        {/* Card */}
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-5 rounded-[20px] bg-surface p-6 sm:gap-6 sm:rounded-[24px] sm:p-10"
+          style={{ boxShadow: '0 8px 24px #0E142214' }}
+        >
+          {/* Heading */}
+          <div className="flex flex-col gap-1">
+            <h1
+              className="text-[20px] font-semibold text-text-primary sm:text-[22px]"
+              style={{ fontFamily: 'var(--font-head)' }}
+            >
+              Создать аккаунт
+            </h1>
+            <p className="text-[14px] text-text-secondary sm:text-[15px]">
+              Введите email и пароль для регистрации
+            </p>
+          </div>
 
-          <Form onSubmit={handleSubmit}>
-            <Card.Content className="flex flex-col gap-4">
-              <TextField
-                isRequired
-                fullWidth
-                name="email"
-                type="email"
-                autoComplete="email"
-                validate={(value) => {
-                  if (!value) return null
-                  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Введите корректный email'
-                  return null
-                }}
-              >
-                <Label>Email</Label>
-                <Input placeholder="you@example.com" variant="secondary" />
-                <FieldError />
-              </TextField>
+          <AuthField
+            label="Email"
+            required
+            type="email"
+            name="email"
+            placeholder="you@example.com"
+            autoComplete="email"
+          />
 
-              <TextField
-                isRequired
-                fullWidth
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                autoComplete="new-password"
-                minLength={6}
-              >
-                <Label>Пароль</Label>
-                <div className="relative">
-                  <Input placeholder="••••••••" variant="secondary" className="pr-10" />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
-                    style={{ color: 'var(--muted)' }}
-                  >
-                    <EyeIcon open={showPassword} />
-                  </button>
-                </div>
-                <Description>Не менее 6 символов</Description>
-                <FieldError />
-              </TextField>
+          <AuthField
+            label="Пароль"
+            required
+            type="password"
+            name="password"
+            placeholder="••••••••"
+            autoComplete="new-password"
+            minLength={6}
+            hint="Не менее 6 символов"
+          />
 
-              {serverError && (
-                <div
-                  role="alert"
-                  aria-live="polite"
-                  className="flex items-start gap-2 rounded-xl px-4 py-3 text-sm"
-                  style={{
-                    background: 'color-mix(in oklch, var(--danger) 12%, transparent)',
-                    color: 'var(--danger)',
-                  }}
-                >
-                  <WarningIcon />
-                  <span>{serverError}</span>
-                </div>
-              )}
-            </Card.Content>
+          {serverError && (
+            <div
+              role="alert"
+              aria-live="polite"
+              className="flex items-start gap-2 rounded-xl px-4 py-3 text-sm"
+              style={{
+                background: 'color-mix(in srgb, #E5484D 12%, transparent)',
+                color: '#E5484D',
+              }}
+            >
+              <WarningIcon />
+              <span>{serverError}</span>
+            </div>
+          )}
 
-            <Card.Footer className="flex flex-col gap-3 mt-2">
-              <Button type="submit" fullWidth isDisabled={isLoading} isPending={isLoading}>
-                {({ isPending }) => (
-                  <>
-                    {isPending && <Spinner color="current" size="sm" />}
-                    {isPending ? 'Регистрация...' : 'Зарегистрироваться'}
-                  </>
-                )}
-              </Button>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="flex w-full items-center justify-center rounded-[10px] bg-accent px-[18px] py-[14px] text-[15px] font-semibold text-text-inverse shadow-[0_4px_12px_#0062FF33] transition-colors hover:bg-accent-press disabled:opacity-60 sm:py-[15px] sm:text-[16px]"
+          >
+            {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
+          </button>
 
-              <p className="text-center text-sm" style={{ color: 'var(--muted)' }}>
-                Уже есть аккаунт?{' '}
-                <Link
-                  href="/login"
-                  className="font-medium underline underline-offset-4"
-                  style={{ color: 'var(--accent)' }}
-                >
-                  Войти
-                </Link>
-              </p>
-            </Card.Footer>
-          </Form>
-        </Card>
+          <div className="flex items-center justify-center gap-[5px]">
+            <span className="text-[13px] text-text-secondary sm:text-[14px]">
+              Уже есть аккаунт?
+            </span>
+            <Link
+              href="/login"
+              className="text-[13px] font-semibold text-accent hover:underline sm:text-[14px]"
+            >
+              Войти
+            </Link>
+          </div>
+        </form>
       </div>
     </div>
   )
