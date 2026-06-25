@@ -49,8 +49,8 @@ export function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-ground p-10">
-      <div className="flex w-[520px] flex-col gap-9">
+    <div className="flex min-h-screen items-center justify-center bg-ground px-5 py-10 sm:p-10">
+      <div className="flex w-full flex-col gap-8 sm:max-w-[520px] sm:gap-9">
         {/* Brand */}
         <div className="flex flex-col items-center gap-[18px]">
           <div
@@ -73,18 +73,20 @@ export function LoginForm() {
         {/* Card */}
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col gap-6 rounded-[24px] bg-surface p-10"
-          style={{ boxShadow: '0 12px 32px #0E142214' }}
+          className="flex flex-col gap-5 rounded-[20px] bg-surface p-6 sm:gap-6 sm:rounded-[24px] sm:p-10"
+          style={{ boxShadow: '0 8px 24px #0E142214' }}
         >
           {/* Heading */}
           <div className="flex flex-col gap-1">
             <h1
-              className="text-[22px] font-semibold text-text-primary"
+              className="text-[20px] font-semibold text-text-primary sm:text-[22px]"
               style={{ fontFamily: 'var(--font-head)' }}
             >
               Войти в аккаунт
             </h1>
-            <p className="text-[15px] text-text-secondary">Введите ваш email и пароль</p>
+            <p className="text-[14px] text-text-secondary sm:text-[15px]">
+              Введите ваш email и пароль
+            </p>
           </div>
 
           <AuthField
@@ -123,16 +125,16 @@ export function LoginForm() {
           <button
             type="submit"
             disabled={isLoading}
-            className="flex w-full items-center justify-center rounded-[10px] bg-accent px-[18px] py-[15px] text-[16px] font-semibold text-text-inverse shadow-[0_4px_12px_#0062FF33] transition-colors hover:bg-accent-press disabled:opacity-60"
+            className="flex w-full items-center justify-center rounded-[10px] bg-accent px-[18px] py-[14px] text-[15px] font-semibold text-text-inverse shadow-[0_4px_12px_#0062FF33] transition-colors hover:bg-accent-press disabled:opacity-60 sm:py-[15px] sm:text-[16px]"
           >
             {isLoading ? 'Вход...' : 'Войти'}
           </button>
 
-          <div className="flex items-center justify-center gap-[6px]">
-            <span className="text-[14px] text-text-secondary">Нет аккаунта?</span>
+          <div className="flex items-center justify-center gap-[5px]">
+            <span className="text-[13px] text-text-secondary sm:text-[14px]">Нет аккаунта?</span>
             <Link
               href="/register"
-              className="text-[14px] font-semibold text-accent hover:underline"
+              className="text-[13px] font-semibold text-accent hover:underline sm:text-[14px]"
             >
               Зарегистрироваться
             </Link>
