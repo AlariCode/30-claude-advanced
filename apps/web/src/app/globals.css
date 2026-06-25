@@ -1,6 +1,42 @@
 @import 'tailwindcss';
 @import '@heroui/styles';
 
+@theme {
+  /* Colors */
+  --color-accent: #0062ff;
+  --color-accent-border: #cfe0ff;
+  --color-accent-press: #0050d6;
+  --color-accent-soft: #e8f0ff;
+  --color-border: #eaecf1;
+  --color-border-strong: #dde1e8;
+  --color-ground: #eef0f4;
+  --color-success: #1a9e5e;
+  --color-success-soft: #e6f6ee;
+  --color-surface: #ffffff;
+  --color-surface-inverse: #0b1220;
+  --color-surface-subtle: #f6f7f9;
+  --color-text-inverse: #ffffff;
+  --color-text-muted: #98a1ae;
+  --color-text-primary: #0e1422;
+  --color-text-secondary: #5a6472;
+  --color-violet: #6b4eff;
+  --color-violet-soft: #edeaff;
+  --color-warning: #e08600;
+  --color-warning-soft: #fcf1e0;
+}
+
+:root {
+  /* Font families — resolved from Next.js font variables */
+  --font-head: var(--font-geist, 'Geist', sans-serif);
+  --font-body: var(--font-inter, 'Inter', sans-serif);
+  --font-data: var(--font-geist-mono, 'Geist Mono', monospace);
+
+  /* Backward-compat aliases used by existing components */
+  --accent: var(--color-accent);
+  --foreground: var(--color-text-primary);
+  --muted: var(--color-text-muted);
+}
+
 @layer base {
   *,
   *::before,
@@ -11,10 +47,9 @@
   }
 
   body {
-    font-family:
-      system-ui,
-      -apple-system,
-      sans-serif;
+    font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
+    color: var(--color-text-primary);
+    background-color: var(--color-ground);
   }
 }
