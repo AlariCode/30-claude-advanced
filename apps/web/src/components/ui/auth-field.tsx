@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type InputHTMLAttributes } from 'react'
+import { useId, useState, type InputHTMLAttributes } from 'react'
 import { EyeIcon } from '@/components/icons'
 
 interface AuthFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
@@ -17,9 +17,12 @@ export function AuthField({
   hint,
   type = 'text',
   errorMessage,
+  id,
   className = '',
   ...props
 }: AuthFieldProps) {
+  const generatedId = useId()
+  const inputId = id ?? generatedId
   const [showPassword, setShowPassword] = useState(false)
   const isPassword = type === 'password'
   const inputType = isPassword && showPassword ? 'text' : type
@@ -27,7 +30,9 @@ export function AuthField({
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
       <div className="flex items-center gap-1">
-        <label className="text-[15px] font-semibold text-text-primary">{label}</label>
+        <label htmlFor={inputId} className="text-[15px] font-semibold text-text-primary">
+          {label}
+        </label>
         {required && (
           <span className="text-[15px] font-semibold" style={{ color: '#E5484D' }}>
             *
@@ -36,6 +41,7 @@ export function AuthField({
       </div>
       <div className="flex items-center justify-between gap-[10px] rounded-[12px] bg-ground px-[16px] py-[15px]">
         <input
+          id={inputId}
           type={inputType}
           className="w-full bg-transparent text-[16px] text-text-primary outline-none placeholder:text-text-muted"
           {...props}
